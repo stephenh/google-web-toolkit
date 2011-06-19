@@ -46,6 +46,10 @@ public class JMethodBody extends JAbstractMethodBody {
     return block;
   }
 
+  public void setBlock(JBlock block) {
+    this.block = block;
+  }
+
   /**
    * Returns this method's local variables.
    */

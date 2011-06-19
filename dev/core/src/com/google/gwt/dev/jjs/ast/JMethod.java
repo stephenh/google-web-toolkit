@@ -138,7 +138,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   /**
    * Construct a bare-bones deserialized external method.
    */
-  private JMethod(String signature, JDeclaredType enclosingType) {
+  public JMethod(String signature, JDeclaredType enclosingType) {
     super(SourceOrigin.UNKNOWN);
     this.name = signature.substring(0, signature.indexOf('('));
     this.enclosingType = enclosingType;

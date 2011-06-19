@@ -57,6 +57,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+
 /**
  * Manages a centralized cache for compiled units.
  */
@@ -224,7 +225,7 @@ public class CompilationStateBuilder {
         };
         buildThread.setName("CompilationUnitBuilder");
         buildThread.start();
-        stealJribbleUnits(builders);
+        stealJribbleUnits(logger, builders);
         Event jdtCompilerEvent = SpeedTracerLogger.start(eventType);
         try {
           compiler.doCompile(builders);
@@ -331,7 +332,7 @@ public class CompilationStateBuilder {
      * Keeps jribble CompilationUnitBuilders from getting to the JDT, but still
      * puts them onto the buildQueue for serialization.
      */
-    private void stealJribbleUnits(Collection<CompilationUnitBuilder> builders) {
+    private void stealJribbleUnits(TreeLogger logger, Collection<CompilationUnitBuilder> builders) {
       // steal jribble builders
       Collection<CompilationUnitBuilder> jribbleBuilders = new ArrayList<CompilationUnitBuilder>();
       for (Iterator<CompilationUnitBuilder> i = builders.iterator(); i.hasNext(); ) {
@@ -351,7 +352,25 @@ public class CompilationStateBuilder {
         // pull dependencies, MethodArgNamesLookup, and JDeclaredTypes from jribble
         cub.setDependencies(new Dependencies());
         cub.setMethodArgs(new MethodArgNamesLookup());
-        cub.setTypes(new ArrayList<JDeclaredType>());
+        ArrayList<JDeclaredType> types = new ArrayList<JDeclaredType>();
+        if (cub.getTypeName().equals("scala.ScalaObject")) {
+          types.add(FakeAsts.makeScalaObject());
+        } else if (cub.getTypeName().equals("scalatest.client.ScalaTest")) {
+          types.add(FakeAsts.makeScalaTest());
+        } else if (cub.getTypeName().equals("scalatest.client.GreetingService")) {
+          types.add(FakeAsts.makeGreetingService());
+        } else if (cub.getTypeName().equals("scalatest.client.GreetingServiceAsync")) {
+          types.add(FakeAsts.makeGreetingServiceAsync());
+        } else if (cub.getTypeName().equals("scalatest.client.ScalaTest$$anon$1")) {
+          types.add(FakeAsts.makeScalaTestInnerClass());
+        } else {
+          System.out.println("No ASTs for " + cub.getTypeName());
+          // DeclaredType declType = JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
+          // cache an instance of the astBuilder
+          // JribbleAstBuilder astBuilder = new JribbleAstBuilder();
+          // types.addAll(astBuilder.process(declType));
+        }
+        cub.setTypes(types);
         // allValidClasses is maintained by the JDT UnitProcessorImpl
         allValidClasses.put(cc.getSourceName(), cc);
         // in case .java files refer to .scala files (e.g. in generated code)
@@ -458,7 +477,7 @@ public class CompilationStateBuilder {
           cachedUnit = null;
         }
       }
-      if (cachedUnit != null) {
+      if (cachedUnit != null && !cachedUnit.getTypeName().contains("scala")) { // temporarily don't read scala stuff from cache
         cachedUnits.put(builder, cachedUnit);
         compileMoreLater.addValidUnit(cachedUnit);
         continue;
@@ -526,4 +545,5 @@ public class CompilationStateBuilder {
     return compileMoreLater.compile(logger, builders, cachedUnits,
         CompilerEventType.JDT_COMPILER_CSB_GENERATED, suppressErrors);
   }
+
 }

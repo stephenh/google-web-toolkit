@@ -115,7 +115,7 @@ public class Shared {
 
   public static String getTypeName(Resource sourceFile) {
     String path = sourceFile.getPath();
-    assert (path.endsWith(".java"));
+    assert (path.endsWith(".java") || path.endsWith(".jribble"));
     path = path.substring(0, path.lastIndexOf('.'));
     return path.replace('/', '.');
   }
