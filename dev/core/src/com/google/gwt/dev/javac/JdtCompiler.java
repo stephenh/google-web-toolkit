@@ -499,6 +499,12 @@ public class JdtCompiler {
     addBinaryTypes(unit.getCompiledClasses());
   }
 
+  // added for jribble to add its CompiledClasses before its CompilationUnit is built
+  public void addCompiledClass(CompiledClass cc) {
+    addPackages(cc.getPackageName());
+    binaryTypes.put(cc.getInternalName(), cc);
+  }
+
   public ArrayList<String> collectApiRefs(final CompilationUnitDeclaration cud) {
     final Set<String> apiRefs = new HashSet<String>();
     class DependencyVisitor extends TypeRefVisitor {

@@ -32,6 +32,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
@@ -41,6 +42,8 @@ import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -194,15 +197,6 @@ public class CompilationStateBuilder {
         Collection<CompilationUnitBuilder> builders,
         Map<CompilationUnitBuilder, CompilationUnit> cachedUnits, EventType eventType,
         boolean suppressErrors) {
-      // Initialize the set of valid classes to the initially cached units.
-      for (CompilationUnit unit : cachedUnits.values()) {
-        for (CompiledClass cc : unit.getCompiledClasses()) {
-          // Map by source name.
-          String sourceName = cc.getSourceName();
-          allValidClasses.put(sourceName, cc);
-        }
-      }
-
       ArrayList<CompilationUnit> resultUnits = new ArrayList<CompilationUnit>();
       do {
         // Compile anything that needs to be compiled.
@@ -230,6 +224,7 @@ public class CompilationStateBuilder {
         };
         buildThread.setName("CompilationUnitBuilder");
         buildThread.start();
+        stealJribbleUnits(builders);
         Event jdtCompilerEvent = SpeedTracerLogger.start(eventType);
         try {
           compiler.doCompile(builders);
@@ -329,6 +324,40 @@ public class CompilationStateBuilder {
             + "Compile with -strict or with -logLevel set to TRACE or DEBUG to see all errors.");
       }
       return resultUnits;
+    }
+
+    /** Remove jribble units from {@code builders} and fill in its {@CompilationUnitBuilder} ourselves.
+     *
+     * Keeps jribble CompilationUnitBuilders from getting to the JDT, but still
+     * puts them onto the buildQueue for serialization.
+     */
+    private void stealJribbleUnits(Collection<CompilationUnitBuilder> builders) {
+      // steal jribble builders
+      Collection<CompilationUnitBuilder> jribbleBuilders = new ArrayList<CompilationUnitBuilder>();
+      for (Iterator<CompilationUnitBuilder> i = builders.iterator(); i.hasNext(); ) {
+        CompilationUnitBuilder cub = i.next();
+        if (cub.getLocation().endsWith(".jribble")) {
+          jribbleBuilders.add(cub);
+          i.remove();
+        }
+      }
+      for (CompilationUnitBuilder cub : jribbleBuilders) {
+        // assume one CompiledClass per CompilationUnit
+        CompiledClass cc = new CompiledClass(readBytes(cub), null, false, cub.getTypeName().replace('.', '/'));
+        ArrayList<CompiledClass> cs = new ArrayList<CompiledClass>();
+        cs.add(cc);
+        cub.setClasses(cs);
+        cub.setJsniMethods(new ArrayList<JsniMethod>());
+        // pull dependencies, MethodArgNamesLookup, and JDeclaredTypes from jribble
+        cub.setDependencies(new Dependencies());
+        cub.setMethodArgs(new MethodArgNamesLookup());
+        cub.setTypes(new ArrayList<JDeclaredType>());
+        // allValidClasses is maintained by the JDT UnitProcessorImpl
+        allValidClasses.put(cc.getSourceName(), cc);
+        // in case .java files refer to .scala files (e.g. in generated code)
+        compiler.addCompiledClass(cc);
+        buildQueue.add(cub);
+      }
     }
   }
 
@@ -445,6 +474,15 @@ public class CompilationStateBuilder {
         compileMoreLater.compile(logger, builders, cachedUnits,
             CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE, suppressErrors);
     return new CompilationState(logger, resultUnits, compileMoreLater);
+  }
+
+  private static byte[] readBytes(CompilationUnitBuilder cub) {
+    try {
+      InputStream in = CompilationStateBuilder.class.getResourceAsStream("/" + cub.getTypeName().replace('.', '/') + ".class");
+      return IOUtils.toByteArray(in);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
