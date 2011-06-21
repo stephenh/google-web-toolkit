@@ -29,12 +29,6 @@ import java.util.ArrayList;
 
 public class FakeAsts {
 
-  static JDeclaredType makeScalaObject() {
-    JInterfaceType t = new JInterfaceType(SourceOrigin.UNKNOWN, "scala.ScalaObject");
-    FakeAsts.createSyntheticMethod(SourceOrigin.UNKNOWN, "$clinit", t, JPrimitiveType.VOID, false, true, true, true);
-    return t;
-  }
-
   static JDeclaredType makeGreetingService() {
     JInterfaceType t = new JInterfaceType(SourceOrigin.UNKNOWN, "scalatest.client.GreetingService");
     t.addImplements(new JInterfaceType("com.google.gwt.user.client.rpc.RemoteService"));
@@ -186,8 +180,8 @@ public class FakeAsts {
     gwtCreate.addParam(new JParameter(SourceOrigin.UNKNOWN, "classLiteral", new JClassType("java.lang.Class"), false, false, gwtCreate));
     gwtCreate.freezeParamTypes();
     gwt.addMethod(gwtCreate);
-    JDeclaredType gs = new JInterfaceType("scalatest.client.GreetingService");
-    JDeclaredType gsAsync = new JInterfaceType("scalatest.client.GreetingServiceAsync");
+    JDeclaredType gs = new JClassType("scalatest.client.GreetingService");
+    JDeclaredType gsAsync = new JClassType("scalatest.client.GreetingServiceAsync");
     JField gsField = new JField(SourceOrigin.UNKNOWN, "greetingService", t, gsAsync, false, Disposition.FINAL);
     JMethodCall gsInit = new JMethodCall(SourceOrigin.UNKNOWN, null, gwtCreate, gsAsync);
     gsInit.addArg(new JClassLiteral(SourceOrigin.UNKNOWN, gs));

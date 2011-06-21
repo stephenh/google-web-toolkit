@@ -23,6 +23,7 @@ import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
+import com.google.gwt.dev.jjs.impl.JribbleAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
@@ -31,6 +32,7 @@ import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
+import com.google.jribble.ast.DeclaredType;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -152,6 +154,8 @@ public class CompilationStateBuilder {
     private final Map<String, CompiledClass> allValidClasses = new HashMap<String, CompiledClass>();
 
     private final GwtAstBuilder astBuilder = new GwtAstBuilder();
+
+    private final JribbleAstBuilder jribbleAstBuilder = new JribbleAstBuilder();
 
     private transient LinkedBlockingQueue<CompilationUnitBuilder> buildQueue;
 
@@ -344,38 +348,39 @@ public class CompilationStateBuilder {
       }
       for (CompilationUnitBuilder cub : jribbleBuilders) {
         // assume one CompiledClass per CompilationUnit
-        CompiledClass cc = new CompiledClass(readBytes(cub), null, false, cub.getTypeName().replace('.', '/'));
-        ArrayList<CompiledClass> cs = new ArrayList<CompiledClass>();
-        cs.add(cc);
-        cub.setClasses(cs);
-        cub.setJsniMethods(new ArrayList<JsniMethod>());
-        // pull dependencies, MethodArgNamesLookup, and JDeclaredTypes from jribble
-        cub.setDependencies(new Dependencies());
-        cub.setMethodArgs(new MethodArgNamesLookup());
-        ArrayList<JDeclaredType> types = new ArrayList<JDeclaredType>();
-        if (cub.getTypeName().equals("scala.ScalaObject")) {
-          types.add(FakeAsts.makeScalaObject());
-        } else if (cub.getTypeName().equals("scalatest.client.ScalaTest")) {
-          types.add(FakeAsts.makeScalaTest());
-        } else if (cub.getTypeName().equals("scalatest.client.GreetingService")) {
-          types.add(FakeAsts.makeGreetingService());
-        } else if (cub.getTypeName().equals("scalatest.client.GreetingServiceAsync")) {
-          types.add(FakeAsts.makeGreetingServiceAsync());
-        } else if (cub.getTypeName().equals("scalatest.client.ScalaTest$$anon$1")) {
-          types.add(FakeAsts.makeScalaTestInnerClass());
-        } else {
-          System.out.println("No ASTs for " + cub.getTypeName());
-          // DeclaredType declType = JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
-          // cache an instance of the astBuilder
-          // JribbleAstBuilder astBuilder = new JribbleAstBuilder();
-          // types.addAll(astBuilder.process(declType));
+        try {
+          CompiledClass cc =
+              new CompiledClass(readBytes(cub), null, false, cub.getTypeName().replace('.', '/'));
+          ArrayList<CompiledClass> cs = new ArrayList<CompiledClass>();
+          cs.add(cc);
+          cub.setClasses(cs);
+          cub.setJsniMethods(new ArrayList<JsniMethod>());
+          // pull dependencies, MethodArgNamesLookup, and JDeclaredTypes from jribble
+          cub.setDependencies(new Dependencies());
+          cub.setMethodArgs(new MethodArgNamesLookup());
+          ArrayList<JDeclaredType> types = new ArrayList<JDeclaredType>();
+          if (cub.getTypeName().equals("scalatest.client.ScalaTest")) {
+            types.add(FakeAsts.makeScalaTest());
+          } else if (cub.getTypeName().equals("scalatest.client.GreetingService")) {
+            types.add(FakeAsts.makeGreetingService());
+          } else if (cub.getTypeName().equals("scalatest.client.GreetingServiceAsync")) {
+            types.add(FakeAsts.makeGreetingServiceAsync());
+          } else if (cub.getTypeName().equals("scalatest.client.ScalaTest$$anon$1")) {
+            types.add(FakeAsts.makeScalaTestInnerClass());
+          } else {
+            DeclaredType declaredType =
+                JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
+            types.addAll(jribbleAstBuilder.process(declaredType));
+          }
+          cub.setTypes(types);
+          // allValidClasses is maintained by the JDT UnitProcessorImpl
+          allValidClasses.put(cc.getSourceName(), cc);
+          // in case .java files refer to .scala files (e.g. in generated code)
+          compiler.addCompiledClass(cc);
+          buildQueue.add(cub);
+        } catch (Exception e) {
+          System.err.println(e.getMessage());
         }
-        cub.setTypes(types);
-        // allValidClasses is maintained by the JDT UnitProcessorImpl
-        allValidClasses.put(cc.getSourceName(), cc);
-        // in case .java files refer to .scala files (e.g. in generated code)
-        compiler.addCompiledClass(cc);
-        buildQueue.add(cub);
       }
     }
   }
@@ -496,11 +501,17 @@ public class CompilationStateBuilder {
   }
 
   private static byte[] readBytes(CompilationUnitBuilder cub) {
+    InputStream in = null;
+    String classFile = cub.getTypeName().replace('.', '/') + ".class";
     try {
-      InputStream in = CompilationStateBuilder.class.getResourceAsStream("/" + cub.getTypeName().replace('.', '/') + ".class");
+      in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classFile);
       return IOUtils.toByteArray(in);
+    } catch (NullPointerException npe) {
+      throw new RuntimeException("Class file not found: " + classFile);
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } finally {
+      IOUtils.closeQuietly(in);
     }
   }
 
