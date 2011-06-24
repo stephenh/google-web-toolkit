@@ -62,6 +62,7 @@ public class JribbleAstBuilderTest extends TestCase {
 
   public void testEmptyClass() throws Exception {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
+    foo.ext = Option.apply(null); // package object ClassDefs have a None ext
     JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
     assertEquals(fooType, "testEmptyClass");
   }

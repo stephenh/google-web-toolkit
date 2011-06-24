@@ -223,6 +223,9 @@ public class JribbleAstBuilder {
       JClassType gwtClassType = mapper.getClassType(jrType.name().javaName());
       if (jrClassDef.ext().isDefined()) {
         gwtClassType.setSuperClass(mapper.getClassType(jrClassDef.ext().get().javaName()));
+      } else {
+        // package objects sometimes? don't have super classes but should in GWT
+        gwtClassType.setSuperClass(mapper.getClassType("java.lang.Object"));
       }
       for (Ref ref : jrClassDef.jimplements()) {
         gwtClassType.addImplements(mapper.getInterfaceType(ref.javaName()));
