@@ -241,18 +241,20 @@ public class JribbleAstBuilderTest extends TestCase {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
     MethodDefBuilder zaz = new MethodDefBuilder("zaz");
 
-    Type stringAA = new Array(new Array(toRef("java.lang.String")));
+    Type string = toRef("java.lang.String");
+    Type stringA = new Array(string);
+    Type stringAA = new Array(new Array(string));
+
     Statement s1 =
-        new VarDef(stringAA, "aa", new Some<Expression>(new NewArray(stringAA, list(
+        new VarDef(stringAA, "aa", new Some<Expression>(new NewArray(stringA, list(
             (Option<Expression>) new Some<Expression>(new IntLiteral(1)), new Some<Expression>(
                 new IntLiteral(1))))));
     Statement s2 =
         new Assignment(new ArrayRef(new ArrayRef(new VarRef("aa"), new IntLiteral(0)),
             new IntLiteral(0)), new StringLiteral("s"));
 
-    Type stringA = new Array(toRef("java.lang.String"));
     Statement s3 =
-        new VarDef(stringA, "a", new Some<Expression>(new ArrayInitializer(stringA, list(
+        new VarDef(stringA, "a", new Some<Expression>(new ArrayInitializer(string, list(
             (Expression) new StringLiteral("1"), new StringLiteral("2")))));
     Statement s4 =
         new Assignment(new ArrayRef(new VarRef("a"), new IntLiteral(0)), new StringLiteral("0"));

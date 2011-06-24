@@ -590,7 +590,7 @@ public class JribbleAstBuilder {
   }
 
   private JNewArray arrayInitializer(ArrayInitializer expr, LocalStack local) {
-    JArrayType arrayType = (JArrayType) mapper.getType(expr.typ());
+    JArrayType arrayType = new JArrayType(mapper.getType(expr.typ()));
     List<JExpression> initializers = new LinkedList<JExpression>();
     for (Expression e : expr.jelements()) {
       initializers.add(expression(e, local));
@@ -609,7 +609,7 @@ public class JribbleAstBuilder {
   }
 
   private JNewArray newArray(NewArray expr, LocalStack local) {
-    JArrayType typ = (JArrayType) mapper.getType(expr.typ());
+    JArrayType typ = new JArrayType(mapper.getType(expr.typ()));
     List<JExpression> dims = new LinkedList<JExpression>();
     for (Option<Expression> i : expr.jdims()) {
       if (i.isDefined()) {
