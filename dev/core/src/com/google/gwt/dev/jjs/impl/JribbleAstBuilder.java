@@ -177,7 +177,7 @@ public class JribbleAstBuilder {
   private JClassType javaLangString = mapper.getClassType("java.lang.String");
 
   public List<JDeclaredType> process(DeclaredType declaredType) {
-    System.out.println("Making AST for " + declaredType);
+    System.out.println("Making AST for " + declaredType.name().javaName());
 
     // todo: handle multiple DeclaredTypes within a single CompilationUnit?
     newTypes = new ArrayList<JDeclaredType>();
