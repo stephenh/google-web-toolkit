@@ -228,6 +228,7 @@ public class JribbleReferenceMapper {
               .on().javaName()), getType(javaName(signature.returnType())), false, isStatic, false,
               false);
     }
+    newExternal.freezeParamTypes();
     assert newExternal.isExternal();
     methods.put(key, newExternal);
     return newExternal;

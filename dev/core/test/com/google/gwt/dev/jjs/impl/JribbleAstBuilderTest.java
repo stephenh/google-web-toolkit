@@ -2,8 +2,12 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
+import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
+import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.util.AbstractTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.jribble.ast.Array;
@@ -34,8 +38,8 @@ import com.google.jribble.ast.Statement;
 import com.google.jribble.ast.StaticFieldRef;
 import com.google.jribble.ast.StaticMethodCall;
 import com.google.jribble.ast.StringLiteral;
-import com.google.jribble.ast.Try;
 import com.google.jribble.ast.ThisRef$;
+import com.google.jribble.ast.Try;
 import com.google.jribble.ast.Type;
 import com.google.jribble.ast.VarDef;
 import com.google.jribble.ast.VarRef;
@@ -53,11 +57,11 @@ import java.io.PrintWriter;
 import scala.Option;
 import scala.Some;
 import scala.Tuple3;
+import scala.collection.immutable.$colon$colon;
 import scala.collection.immutable.HashSet;
 import scala.collection.immutable.List;
 import scala.collection.immutable.List$;
 import scala.collection.immutable.Set;
-import scala.collection.immutable.$colon$colon;
 
 public class JribbleAstBuilderTest extends TestCase {
 
@@ -161,6 +165,9 @@ public class JribbleAstBuilderTest extends TestCase {
 
     JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
     assertEquals(fooType, "testNewCall");
+    // ensure the external JMethod was frozen so getSignature doesn't NPE
+    JExpressionStatement addStmt = (JExpressionStatement) ((JMethodBody) fooType.getMethods().get(3).getBody()).getBlock().getStatements().get(1);
+    Assert.assertEquals("add()V", ((JMethodCall) addStmt.getExpr()).getTarget().getSignature());
   }
 
   public void testConstructors() throws Exception {
