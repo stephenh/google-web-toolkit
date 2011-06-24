@@ -507,9 +507,11 @@ public class CompilationStateBuilder {
     String classFile = cub.getTypeName().replace('.', '/') + ".class";
     try {
       in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classFile);
-      return IOUtils.toByteArray(in);
-    } catch (NullPointerException npe) {
-      throw new RuntimeException("Class file not found: " + classFile);
+      if (in != null) {
+        return IOUtils.toByteArray(in);
+      } else {
+        throw new RuntimeException("Class file not found: " + classFile);
+      }
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {
