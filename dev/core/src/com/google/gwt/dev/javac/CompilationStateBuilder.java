@@ -484,7 +484,7 @@ public class CompilationStateBuilder {
           cachedUnit = null;
         }
       }
-      if (cachedUnit != null && !cachedUnit.getTypeName().contains("scala")) { // temporarily don't read scala stuff from cache
+      if (cachedUnit != null) {
         cachedUnits.put(builder, cachedUnit);
         compileMoreLater.addValidUnit(cachedUnit);
         continue;
