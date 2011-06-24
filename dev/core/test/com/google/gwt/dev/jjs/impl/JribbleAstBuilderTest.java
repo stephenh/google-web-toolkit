@@ -1,5 +1,6 @@
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -261,6 +262,26 @@ public class JribbleAstBuilderTest extends TestCase {
 
     JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
     assertEquals(fooType, "testArrays");
+  }
+
+  public void testInterfacesTreatedAsClasses() throws Exception {
+    JribbleAstBuilder jab = new JribbleAstBuilder();
+    // do one unit that refers to another via a method call, assumed to be a class
+    ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
+    MethodDefBuilder zaz = new MethodDefBuilder("zaz");
+    zaz.params = list(new ParamDef("l", toRef("java.util.List")));
+    Statement s1 =
+        new MethodCall(new VarRef("l"), new Signature(toRef("java.util.List"), "add",
+            list((Type) toRef("java.lang.Object")), new Primitive("void")),
+            list((Expression) new VarRef("l")));
+    zaz.stmts = list(s1);
+    foo.classBody = list(zaz.build());
+    jab.process(foo.build());
+    // now do another unit that implements java.util.List, that requires it to be an interface
+    ClassDefBuilder foo2 = new ClassDefBuilder("foo.Bar2");
+    foo2.impls = list(toRef("java.util.List"));
+    JClassType foo2Type = (JClassType) jab.process(foo2.build()).get(0);
+    assertEquals(foo2Type.getImplements().get(0).getName(), "java.util.List");
   }
 
   private static Statement newWindowAlert(String message) {

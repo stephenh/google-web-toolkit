@@ -122,9 +122,11 @@ public class JribbleReferenceMapper {
 
   /** assumes the caller knows name is an interface type */
   public JInterfaceType getInterfaceType(String name) {
-    JInterfaceType existing = (JInterfaceType) getExistingType(name);
-    if (existing != null) {
-      return existing;
+    JDeclaredType existing = (JDeclaredType) getExistingType(name);
+    // While building another mini AST, this type name may have been
+    // assumed to be a JClassType. Ignore the JClassType if so.
+    if (existing != null && existing instanceof JInterfaceType) {
+      return (JInterfaceType) existing;
     }
     JInterfaceType newExternal = new JInterfaceType(name);
     assert newExternal.isExternal();
