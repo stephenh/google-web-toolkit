@@ -380,6 +380,8 @@ public class CompilationStateBuilder {
           buildQueue.add(cub);
         } catch (Exception e) {
           System.err.println(e.getMessage());
+        } catch (AssertionError ae) {
+          System.err.println(ae.getMessage());
         }
       }
     }
