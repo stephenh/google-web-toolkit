@@ -461,7 +461,7 @@ public class JribbleAstBuilder {
   }
 
   private void fieldDef(FieldDef fieldDef, ClassDef classDef, JClassType enclosingClass) {
-    JField field = mapper.getField(classDef.name().javaName(), fieldDef.name());
+    JField field = mapper.getField(classDef.name().javaName(), fieldDef.name(), fieldDef.modifs().contains("static"));
     assert !field.isExternal();
     JMethod method;
     JFieldRef fieldRef;
@@ -623,7 +623,7 @@ public class JribbleAstBuilder {
   }
 
   private JFieldRef staticFieldRef(StaticFieldRef expr, LocalStack local) {
-    JField field = mapper.getField(expr.on().javaName(), expr.name());
+    JField field = mapper.getField(expr.on().javaName(), expr.name(), true);
     return new JFieldRef(UNKNOWN, null, field, local.getEnclosingType());
   }
 
@@ -631,7 +631,7 @@ public class JribbleAstBuilder {
     JExpression on = expression(expr.on(), local);
     // TODO FieldRef.onType should be of type Ref and not Type
     JClassType typ = (JClassType) mapper.getType(expr.onType());
-    JField field = mapper.getField(typ.getName(), expr.name());
+    JField field = mapper.getField(typ.getName(), expr.name(), false);
     return new JFieldRef(UNKNOWN, on, field, local.getEnclosingType());
   }
 

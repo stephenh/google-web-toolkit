@@ -33,8 +33,8 @@ import com.google.jribble.ast.Statement;
 import com.google.jribble.ast.StaticFieldRef;
 import com.google.jribble.ast.StaticMethodCall;
 import com.google.jribble.ast.StringLiteral;
-import com.google.jribble.ast.ThisRef$;
 import com.google.jribble.ast.Try;
+import com.google.jribble.ast.ThisRef$;
 import com.google.jribble.ast.Type;
 import com.google.jribble.ast.VarDef;
 import com.google.jribble.ast.VarRef;
@@ -52,11 +52,11 @@ import java.io.PrintWriter;
 import scala.Option;
 import scala.Some;
 import scala.Tuple3;
-import scala.collection.immutable.$colon$colon;
 import scala.collection.immutable.HashSet;
 import scala.collection.immutable.List;
 import scala.collection.immutable.List$;
 import scala.collection.immutable.Set;
+import scala.collection.immutable.$colon$colon;
 
 public class JribbleAstBuilderTest extends TestCase {
 
@@ -210,7 +210,9 @@ public class JribbleAstBuilderTest extends TestCase {
             new StringLiteral("f22"));
     Statement assignf3 =
         new Assignment(new StaticFieldRef(toRef("foo.Bar"), "f3"), new StringLiteral("f33"));
-    zaz.stmts = list(assignf1, assignf2, assignf3);
+    Statement assignfOther =
+        new Assignment(new StaticFieldRef(toRef("foo.Other"), "i"), new IntLiteral(1));
+    zaz.stmts = list(assignf1, assignf2, assignf3, assignfOther);
     foo.classBody = list((ClassBodyElement) f1, f2, f3, f4, zaz.build());
 
     JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
@@ -250,7 +252,8 @@ public class JribbleAstBuilderTest extends TestCase {
     Statement s3 =
         new VarDef(stringA, "a", new Some<Expression>(new ArrayInitializer(stringA, list(
             (Expression) new StringLiteral("1"), new StringLiteral("2")))));
-    Statement s4 = new Assignment(new ArrayRef(new VarRef("a"), new IntLiteral(0)), new StringLiteral("0"));
+    Statement s4 =
+        new Assignment(new ArrayRef(new VarRef("a"), new IntLiteral(0)), new StringLiteral("0"));
 
     zaz.stmts = list(s1, s2, s3, s4);
     foo.classBody = list(zaz.build());

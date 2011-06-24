@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNullType;
@@ -79,7 +80,7 @@ public class JribbleReferenceMapper {
   public JType getType(Type type) {
     if (type instanceof Array) {
       return new JArrayType(getType(((Array) type).typ()));
-    } 
+    }
     return getType(javaName(type));
   }
 
@@ -104,7 +105,8 @@ public class JribbleReferenceMapper {
     JClassType newExternal = new JClassType(name);
     assert newExternal.isExternal();
     types.put(name, newExternal);
-    // ReferenceMapper fills in super class, interfaces, and clinit...do we need that for these external types?
+    // ReferenceMapper fills in super class, interfaces, and clinit...do we need that for these
+    // external types?
     // see {@link ReferenceMapper#get(TypeBinding)}
     // Emulate clinit method for super clinit calls.
     {
@@ -182,7 +184,7 @@ public class JribbleReferenceMapper {
     }
   }
 
-  public JField getField(String typeName, String fieldName) {
+  public JField getField(String typeName, String fieldName, boolean isStatic) {
     String key = typeName + "." + fieldName + ":";
     JField sourceField = sourceFields.get(key);
     if (sourceField != null) {
@@ -194,7 +196,9 @@ public class JribbleReferenceMapper {
       assert externalField.isExternal();
       return externalField;
     }
-    JField newExternal = new JField(fieldName, (JDeclaredType) getType(typeName));
+    JField newExternal =
+        new JField(SourceOrigin.UNKNOWN, fieldName, (JDeclaredType) getType(typeName),
+            JPrimitiveType.VOID, isStatic, Disposition.NONE);
     assert newExternal.isExternal();
     fields.put(key, newExternal);
     return newExternal;
@@ -229,7 +233,7 @@ public class JribbleReferenceMapper {
 
   public void setSourceMethod(Signature signature, JMethod method) {
     assert !method.isExternal();
-    sourceMethods.put(key(signature), method);
+    sourceMethods.put(key(signature, method instanceof JConstructor), method);
   }
 
   public void setSourceField(ClassDef jrClassDef, FieldDef jrFieldDef, JField field) {

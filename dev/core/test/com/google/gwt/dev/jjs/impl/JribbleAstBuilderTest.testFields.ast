@@ -24,6 +24,7 @@ class Bar extends Object {
     this.f1 = "f11";
     other.f2 = "f22";
     Bar.f3 = "f33";
+    Other.i = 1;
   }
 
 }
