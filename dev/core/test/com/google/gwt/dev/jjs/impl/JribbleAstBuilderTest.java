@@ -1,13 +1,14 @@
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.jjs.ast.JClassType;
+import static com.google.gwt.dev.jjs.impl.AstUtils.toRef;
+
+import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
-import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.util.AbstractTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.jribble.ast.Array;
@@ -28,7 +29,6 @@ import com.google.jribble.ast.MethodCall;
 import com.google.jribble.ast.MethodDef;
 import com.google.jribble.ast.NewArray;
 import com.google.jribble.ast.NewCall;
-import com.google.jribble.ast.Package;
 import com.google.jribble.ast.ParamDef;
 import com.google.jribble.ast.Primitive;
 import com.google.jribble.ast.Ref;
@@ -68,7 +68,7 @@ public class JribbleAstBuilderTest extends TestCase {
   public void testEmptyClass() throws Exception {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
     foo.ext = Option.apply(null); // package object ClassDefs have a None ext
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testEmptyClass");
   }
 
@@ -79,7 +79,7 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list((Statement) new Return(none));
     foo.classBody = list(zaz.build());
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testOneVoidMethod");
     Assert.assertEquals("zaz()V", fooType.getMethods().get(3).getSignature());
     Assert.assertFalse(fooType.isExternal());
@@ -93,7 +93,7 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list((Statement) new Return(new Some<Expression>(new StringLiteral("hello"))));
     foo.classBody = list(zaz.build());
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testOneStringMethod");
     Assert.assertEquals("zaz()Ljava/lang/String;", fooType.getMethods().get(3).getSignature());
     Assert.assertFalse(fooType.isExternal());
@@ -113,7 +113,7 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list(intDef, intAssignment, stringDef, stringAssignment);
     foo.classBody = list(zaz.build());
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testLocalVariables");
   }
 
@@ -137,7 +137,7 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list(tryStmt);
     foo.classBody = list(zaz.build());
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testTryCatchFinally");
   }
 
@@ -163,7 +163,7 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list(varDef, addCall);
     foo.classBody = list(zaz.build());
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testNewCall");
     // ensure the external JMethod was frozen so getSignature doesn't NPE
     JExpressionStatement addStmt = (JExpressionStatement) ((JMethodBody) fooType.getMethods().get(3).getBody()).getBlock().getStatements().get(1);
@@ -188,7 +188,7 @@ public class JribbleAstBuilderTest extends TestCase {
 
     foo.classBody = list((ClassBodyElement) cstr1, cstr2);
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testConstructors");
   }
 
@@ -224,7 +224,7 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list(assignf1, assignf2, assignf3, assignfOther);
     foo.classBody = list((ClassBodyElement) f1, f2, f3, f4, zaz.build());
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testFields");
     assertEquals(4, fooType.getFields().size());
   }
@@ -239,7 +239,7 @@ public class JribbleAstBuilderTest extends TestCase {
         new InterfaceDef(set("private"), toRef("foo.SpecialList"), list(toRef("java.util.List")),
             list(zaz));
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(specialList).get(0);
+    JDeclaredType fooType = new JribbleAstBuilder().process(specialList).types.get(0);
     assertEquals(fooType, "testInterface");
     Assert.assertTrue(fooType.getMethods().get(1).isAbstract());
   }
@@ -269,7 +269,7 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list(s1, s2, s3, s4);
     foo.classBody = list(zaz.build());
 
-    JDeclaredType fooType = new JribbleAstBuilder().process(foo.build()).get(0);
+    JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testArrays");
   }
 
@@ -289,8 +289,19 @@ public class JribbleAstBuilderTest extends TestCase {
     // now do another unit that implements java.util.List, that requires it to be an interface
     ClassDefBuilder foo2 = new ClassDefBuilder("foo.Bar2");
     foo2.impls = list(toRef("java.util.List"));
-    JClassType foo2Type = (JClassType) jab.process(foo2.build()).get(0);
+    JDeclaredType foo2Type = process(foo2);
     assertEquals(foo2Type.getImplements().get(0).getName(), "java.util.List");
+  }
+
+  public void testMethodArgNames() throws Exception {
+    ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
+    MethodDefBuilder zaz = new MethodDefBuilder("zaz");
+    zaz.params = list(new ParamDef("i", new Primitive("int")));
+    foo.classBody = list(zaz.build());
+
+    MethodArgNamesLookup methodArgNames = new JribbleAstBuilder().process(foo.build()).methodArgNames;
+    Assert.assertEquals("foo.Bar.zaz(I)V", methodArgNames.getMethods()[0]);
+    Assert.assertEquals("i", methodArgNames.lookup("foo.Bar.zaz(I)V")[0]);
   }
 
   private static Statement newWindowAlert(String message) {
@@ -395,14 +406,8 @@ public class JribbleAstBuilderTest extends TestCase {
     return list(ts).toSet();
   }
 
-  private static Ref toRef(String name) {
-    int i = name.lastIndexOf(".");
-    if (i == -1) {
-      Option<Package> none = Option.apply(null);
-      return new Ref(none, name);
-    } else {
-      return new Ref(new Some<Package>(new Package(name.substring(0, i))), name.substring(i + 1));
-    }
+  private static JDeclaredType process(ClassDefBuilder foo) {
+    return new JribbleAstBuilder().process(foo.build()).types.get(0);
   }
 
 }

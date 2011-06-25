@@ -37,10 +37,10 @@ import com.google.jribble.ast.Signature;
 import com.google.jribble.ast.Type;
 import com.google.jribble.ast.Void$;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Creates unresolved references to types, fields, and methods.
@@ -50,15 +50,18 @@ import java.util.Map;
  * flushed after each CompilationUnit is built.
  * 
  * Closely modeled after the canonical Java {@ReferenceMapper}.
+ *
+ * todo: interning.
  */
 public class JribbleReferenceMapper {
 
   private static final StringInterner stringInterner = StringInterner.get();
-  private final List<String> argNames = new ArrayList<String>();
-  // full instances, flushed per CompilationUnit
+  // source instances, flushed per CompilationUnit
   private final Map<String, JField> sourceFields = new HashMap<String, JField>();
   private final Map<String, JMethod> sourceMethods = new HashMap<String, JMethod>();
   private final Map<String, JReferenceType> sourceTypes = new HashMap<String, JReferenceType>();
+  // keep a list of touched types for Dependencies purposes, flushed per CompilationUnit
+  private final Set<String> touchedTypes = new HashSet<String>();
   // external instances, kept across CompilationUnits
   private final Map<String, JField> fields = new HashMap<String, JField>();
   private final Map<String, JMethod> methods = new HashMap<String, JMethod>();
@@ -74,37 +77,40 @@ public class JribbleReferenceMapper {
     sourceFields.clear();
     sourceMethods.clear();
     sourceTypes.clear();
+    touchedTypes.clear();
   }
 
-  /** @return an existing source or external JType, only if it exists */
+  /** @return an existing source or exiting|new external JType */
   public JType getType(Type type) {
     if (type instanceof Array) {
+      // is it fine not to cache this JArrayType?
       return new JArrayType(getType(((Array) type).typ()));
     }
     return getType(javaName(type));
   }
 
+  /** @return an existing source or exiting|new external JType */
   public JType getType(String name) {
-    JType existing = getExistingType(name);
+    JType existing = getTypeIfExists(name);
     if (existing != null) {
       return existing;
     }
-    // if no existing type, assume a new external JClassType is okay
+    // If no existing type, assume a new external JClassType is okay.
+    // Even if this was supposed to be a JInterfaceType, since it
+    // is external, UnifyAst will fix things up for us later.
     return getClassType(name);
   }
 
-  /**
-   * @return an existing source or external type, or makes a new external type. Assumes the caller
-   *         knows name is a class type.
-   */
+  /** @return an existing source or exiting|new external JClassType */
   public JClassType getClassType(String name) {
-    JClassType existing = (JClassType) getExistingType(name);
+    JClassType existing = (JClassType) getTypeIfExists(name);
     if (existing != null) {
       return existing;
     }
     JClassType newExternal = new JClassType(name);
     assert newExternal.isExternal();
     types.put(name, newExternal);
+    touchedTypes.add(name);
     // ReferenceMapper fills in super class, interfaces, and clinit...do we need that for these
     // external types?
     // see {@link ReferenceMapper#get(TypeBinding)}
@@ -120,24 +126,31 @@ public class JribbleReferenceMapper {
     return newExternal;
   }
 
-  /** assumes the caller knows name is an interface type */
+  /** @return an existing source or exiting|new external JInterfaceType */
   public JInterfaceType getInterfaceType(String name) {
-    JDeclaredType existing = (JDeclaredType) getExistingType(name);
-    // While building another mini AST, this type name may have been
-    // assumed to be a JClassType. Ignore the JClassType if so.
+    JDeclaredType existing = (JDeclaredType) getTypeIfExists(name);
+    // While building a different mini AST, this type name may have been assumed to
+    // be a JClassType when now we see it's not. If so, ignore the old one and start
+    // using a new JInterfaceType external. UnifyAst will clean the old reference up
+    // later.
     if (existing != null && existing instanceof JInterfaceType) {
       return (JInterfaceType) existing;
     }
     JInterfaceType newExternal = new JInterfaceType(name);
     assert newExternal.isExternal();
     types.put(name, newExternal);
+    touchedTypes.add(name);
     // ReferenceMapper fills in interfaces, and clinit
     // see {@link ReferenceMapper#get(TypeBinding)} ... do we need that?
     return newExternal;
   }
 
+  public Set<String> getTouchedTypes() {
+    return touchedTypes;
+  }
+
   // searches sourceTypes then external types else null
-  private JType getExistingType(String name) {
+  private JType getTypeIfExists(String name) {
     JType sourceType = sourceTypes.get(name);
     if (sourceType != null) {
       assert !sourceType.isExternal();
@@ -147,6 +160,9 @@ public class JribbleReferenceMapper {
     if (externalType != null) {
       assert externalType instanceof JPrimitiveType || externalType == JNullType.INSTANCE
           || externalType.isExternal();
+      if (!(externalType instanceof JPrimitiveType || externalType == JNullType.INSTANCE)) {
+        touchedTypes.add(name);
+      }
       return externalType;
     }
     return null;
@@ -176,7 +192,8 @@ public class JribbleReferenceMapper {
     if (type instanceof Ref) {
       return ((Ref) type).javaName();
     } else if (type instanceof Array) {
-      return javaName(((Array) type).typ());
+      // seemed like a bug to return the java name of Array[String] as just "String". Use String[] instead.
+      return javaName(((Array) type).typ()) + "[]";
     } else if (type instanceof Primitive) {
       return ((Primitive) type).name();
     } else if (type == Void$.MODULE$) {
@@ -225,7 +242,7 @@ public class JribbleReferenceMapper {
     } else {
       newExternal =
           new JMethod(SourceOrigin.UNKNOWN, signature.name(), (JDeclaredType) getType(signature
-              .on().javaName()), getType(javaName(signature.returnType())), false, isStatic, false,
+              .on().javaName()), getType(signature.returnType()), false, isStatic, false,
               false);
     }
     newExternal.freezeParamTypes();
@@ -247,6 +264,7 @@ public class JribbleReferenceMapper {
   public void setSourceType(DeclaredType type, JDeclaredType jtype) {
     assert !jtype.isExternal();
     sourceTypes.put(type.name().javaName(), jtype);
+    touchedTypes.add(type.name().javaName());
   }
 
   private String intern(String s) {

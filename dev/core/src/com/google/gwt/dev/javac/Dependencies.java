@@ -16,11 +16,13 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -54,6 +56,33 @@ class Dependencies implements Serializable {
     public String getSignatureHash() {
       return hash;
     }
+  }
+
+  /** Infers qualified and simple refs from {@code apiRefs}.
+   *
+   * For each apiRef, say foo.bar.Zaz, we add qualified types of "foo", "foo.bar",
+   * and "foo.bar.Zaz". This will cause invalidation whenever someone introduces
+   * a new class "foo", "foo.bar", changes/removes "foo.bar.Zaz".
+   *
+   * For each apiRef in java.lang, say java.lang.String, we add a simple type of
+   * "String". This means, for compilation "foo.bar.Zaz", it will be invalidated
+   * if someone introduces "foo.bar.String", as the import precedence changes.
+   */
+  static Dependencies buildFromApiRefs(String myPackage, List<String> apiRefs) {
+    List<String> simpleRefs = new ArrayList<String>();
+    List<String> qualifiedRefs = new ArrayList<String>();
+    for (String apiRef : apiRefs) {
+      int i = 0;
+      while ((i = apiRef.indexOf('.', i + 1)) > -1) {
+        qualifiedRefs.add(apiRef.substring(0, i));
+      }
+      qualifiedRefs.add(apiRef);
+      if (apiRef.startsWith("java.lang.")) {
+        simpleRefs.add(apiRef.substring("java.lang.".length()));
+      }
+    }
+    // TODO: Do we need to intern qualifiedRefs, simpleRefs, and apiRefs?
+    return new Dependencies(myPackage, qualifiedRefs, simpleRefs, apiRefs);
   }
 
   Map<String, Ref> qualified = new HashMap<String, Ref>();

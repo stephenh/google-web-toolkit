@@ -14,6 +14,9 @@
 
 package com.google.gwt.dev.jjs.impl;
 
+import static com.google.gwt.thirdparty.guava.common.collect.Sets.newHashSet;
+
+import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -156,6 +159,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import scala.Option;
@@ -164,23 +168,39 @@ import scala.Tuple3;
 
 /**
  * Class that transforms jribble AST into a per-CompilationUnit GWT mini AST.
+ *
+ * todo: interning
  */
 public class JribbleAstBuilder {
+
+  public static class Result {
+    public final List<JDeclaredType> types;
+    public final Set<String> apiRefs;
+    public final MethodArgNamesLookup methodArgNames;
+
+    public Result(List<JDeclaredType> types, Set<String> apiRefs, MethodArgNamesLookup methodArgNames) {
+      this.types = types;
+      this.apiRefs = apiRefs;
+      this.methodArgNames = methodArgNames;
+    }
+  }
 
   private static final StringInterner stringInterner = StringInterner.get();
   private static final SourceOrigin UNKNOWN = SourceOrigin.UNKNOWN;
   private final JribbleReferenceMapper mapper = new JribbleReferenceMapper();
   // reset on each invocation of process
   private ArrayList<JDeclaredType> newTypes;
+  private MethodArgNamesLookup methodArgNames;
   // Unlike {@ReferenceMapper}, we'll never have java.lang source types, so we don't have to reset these
   private JClassType javaLangClass = mapper.getClassType("java.lang.Class");
   private JClassType javaLangString = mapper.getClassType("java.lang.String");
 
-  public List<JDeclaredType> process(DeclaredType declaredType) {
+  public Result process(DeclaredType declaredType) {
     System.out.println("Making AST for " + declaredType.name().javaName());
 
     // todo: handle multiple DeclaredTypes within a single CompilationUnit?
     newTypes = new ArrayList<JDeclaredType>();
+    methodArgNames = new MethodArgNamesLookup();
 
     // Create the new source type
     createType(declaredType);
@@ -192,8 +212,9 @@ public class JribbleAstBuilder {
     buildTheCode(declaredType);
 
     // Clean up.
-    List<JDeclaredType> result = newTypes;
+    Result result = new Result(newTypes, newHashSet(mapper.getTouchedTypes()), methodArgNames);
     mapper.clearSource();
+    methodArgNames = null;
     newTypes = null;
     return result;
   }
@@ -321,6 +342,7 @@ public class JribbleAstBuilder {
       method.setBody(new JMethodBody(UNKNOWN));
     }
     gwtType.addMethod(method);
+    methodArgNames.store(gwtType.getName(), method);
     mapper.setSourceMethod(jrMethod.signature(jrType.name()), method);
   }
 
@@ -334,6 +356,7 @@ public class JribbleAstBuilder {
     }
     method.freezeParamTypes();
     gwtType.addMethod(method);
+    methodArgNames.store(gwtType.getName(), method);
     method.setBody(new JMethodBody(UNKNOWN));
     mapper.setSourceMethod(cstr.signature(jrType.name()), method);
   }

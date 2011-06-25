@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
+import static com.google.gwt.thirdparty.guava.common.collect.Lists.newArrayList;
+
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.CompilationUnitBuilder.GeneratedCompilationUnitBuilder;
 import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
@@ -26,6 +28,8 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.jjs.impl.JribbleAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.Name.BinaryName;
+import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -350,15 +354,12 @@ public class CompilationStateBuilder {
         // assume one CompiledClass per CompilationUnit
         try {
           CompiledClass cc =
-              new CompiledClass(readBytes(cub), null, false, cub.getTypeName().replace('.', '/'));
-          ArrayList<CompiledClass> cs = new ArrayList<CompiledClass>();
-          cs.add(cc);
-          cub.setClasses(cs);
+              new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()));
+          cub.setClasses(newArrayList(cc));
           cub.setJsniMethods(new ArrayList<JsniMethod>());
-          // pull dependencies, MethodArgNamesLookup, and JDeclaredTypes from jribble
-          cub.setDependencies(new Dependencies());
-          cub.setMethodArgs(new MethodArgNamesLookup());
           ArrayList<JDeclaredType> types = new ArrayList<JDeclaredType>();
+          Dependencies dependencies = new Dependencies();
+          MethodArgNamesLookup methodArgNames = new MethodArgNamesLookup();
           if (cub.getTypeName().equals("scalatest.client.ScalaTest")) {
             types.add(FakeAsts.makeScalaTest());
           } else if (cub.getTypeName().equals("scalatest.client.GreetingService")) {
@@ -370,9 +371,14 @@ public class CompilationStateBuilder {
           } else {
             DeclaredType declaredType =
                 JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
-            types.addAll(jribbleAstBuilder.process(declaredType));
+            JribbleAstBuilder.Result result = jribbleAstBuilder.process(declaredType);
+            types.addAll(result.types);
+            dependencies = Dependencies.buildFromApiRefs(cc.getPackageName(), newArrayList(result.apiRefs));
+            methodArgNames = result.methodArgNames;
           }
           cub.setTypes(types);
+          cub.setDependencies(dependencies);
+          cub.setMethodArgs(methodArgNames);
           // allValidClasses is maintained by the JDT UnitProcessorImpl
           allValidClasses.put(cc.getSourceName(), cc);
           // in case .java files refer to .scala files (e.g. in generated code)
