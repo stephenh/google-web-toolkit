@@ -1028,7 +1028,11 @@ public class JribbleAstBuilder {
 
   private static void addClinitSuperCall(JDeclaredType type) {
     JMethod myClinit = type.getMethods().get(0);
-    JMethod superClinit = type.getSuperClass().getMethods().get(0);
+    // make an external clinit (with 1 class per compilation unit, type.getSuperClass is guaranteed
+    // to be external, otherwise we'd have to use mapper.getMethod)
+    JMethod superClinit =
+        createSyntheticMethod(UNKNOWN, "$clinit", type.getSuperClass(), JPrimitiveType.VOID, false,
+            true, true, true);
     JMethodCall superClinitCall = new JMethodCall(myClinit.getSourceInfo(), null, superClinit);
     JMethodBody body = (JMethodBody) myClinit.getBody();
     body.getBlock().addStmt(0, superClinitCall.makeStatement());

@@ -113,18 +113,6 @@ public class JribbleReferenceMapper {
     assert newExternal.isExternal();
     types.put(name, newExternal);
     touchedTypes.add(name);
-    // ReferenceMapper fills in super class, interfaces, and clinit...do we need that for these
-    // external types?
-    // see {@link ReferenceMapper#get(TypeBinding)}
-    // Emulate clinit method for super clinit calls.
-    {
-      JMethod clinit =
-          new JMethod(SourceOrigin.UNKNOWN, "$clinit", newExternal, JPrimitiveType.VOID, false,
-              true, true, true);
-      clinit.freezeParamTypes();
-      clinit.setSynthetic();
-      newExternal.addMethod(clinit);
-    }
     return newExternal;
   }
 
@@ -142,8 +130,6 @@ public class JribbleReferenceMapper {
     assert newExternal.isExternal();
     types.put(name, newExternal);
     touchedTypes.add(name);
-    // ReferenceMapper fills in interfaces, and clinit
-    // see {@link ReferenceMapper#get(TypeBinding)} ... do we need that?
     return newExternal;
   }
 
