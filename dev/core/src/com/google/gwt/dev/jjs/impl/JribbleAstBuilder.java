@@ -364,7 +364,7 @@ public class JribbleAstBuilder {
   // TODO(grek): This class should be implemented as immutable data structure
   // but I fail to see how to achieve that without lots of code and not cloning
   // underlying collections all the time.
-  private final class LocalStack {
+  private static final class LocalStack {
     private final Stack<Map<String, JLocal>> varStack = new Stack<Map<String, JLocal>>();
     private final Map<String, JParameter> params;
     private final Map<String, JLabel> labels = new HashMap<String, JLabel>();
