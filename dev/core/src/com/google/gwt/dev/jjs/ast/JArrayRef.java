@@ -36,15 +36,7 @@ public class JArrayRef extends JExpression {
     if (type instanceof JNullType) {
       return null;
     }
-    // The type on the JExpression that jribble generates is the element type,
-    // while this, for normal Java->GWT ASTs, was expecting the array type.
-    // We can check which case we're in and wrap the element type with JArrayType
-    // if it came from jribble.
-    if (type instanceof JReferenceType && ((JReferenceType) type).getUnderlyingType() instanceof JArrayType) {
-      return (JArrayType) ((JReferenceType) type).getUnderlyingType();
-    } else {
-      return new JArrayType(type);
-    }
+    return (JArrayType) ((JReferenceType) type).getUnderlyingType();
   }
 
   public JExpression getIndexExpr() {

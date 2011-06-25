@@ -82,10 +82,6 @@ public class JribbleReferenceMapper {
 
   /** @return an existing source or exiting|new external JType */
   public JType getType(Type type) {
-    if (type instanceof Array) {
-      // is it fine not to cache this JArrayType?
-      return new JArrayType(getType(((Array) type).typ()));
-    }
     return getType(javaName(type));
   }
 
@@ -94,6 +90,12 @@ public class JribbleReferenceMapper {
     JType existing = getTypeIfExists(name);
     if (existing != null) {
       return existing;
+    }
+    if (name.startsWith("[")) {
+      JArrayType newArrayType = new JArrayType(getType(name.substring(1)));
+      types.put(name, newArrayType);
+      // don't put into touched types as array types don't need to be in the dependencies
+      return newArrayType;
     }
     // If no existing type, assume a new external JClassType is okay.
     // Even if this was supposed to be a JInterfaceType, since it
@@ -192,8 +194,7 @@ public class JribbleReferenceMapper {
     if (type instanceof Ref) {
       return ((Ref) type).javaName();
     } else if (type instanceof Array) {
-      // seemed like a bug to return the java name of Array[String] as just "String". Use String[] instead.
-      return javaName(((Array) type).typ()) + "[]";
+      return "[" + javaName(((Array) type).typ());
     } else if (type instanceof Primitive) {
       return ((Primitive) type).name();
     } else if (type == Void$.MODULE$) {
