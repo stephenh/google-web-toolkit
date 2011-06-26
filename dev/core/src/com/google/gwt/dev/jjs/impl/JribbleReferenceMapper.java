@@ -50,7 +50,7 @@ import java.util.Set;
  * flushed after each CompilationUnit is built.
  * 
  * Closely modeled after the canonical Java {@ReferenceMapper}.
- *
+ * 
  * todo: interning.
  */
 public class JribbleReferenceMapper {
@@ -146,14 +146,20 @@ public class JribbleReferenceMapper {
     }
     JType externalType = types.get(name);
     if (externalType != null) {
-      assert externalType instanceof JPrimitiveType || externalType == JNullType.INSTANCE
-          || externalType.isExternal();
-      if (!(externalType instanceof JPrimitiveType || externalType == JNullType.INSTANCE)) {
+      assert isEffectivelyExternal(externalType);
+      if (!(externalType instanceof JPrimitiveType || externalType == JNullType.INSTANCE || externalType instanceof JArrayType)) {
         touchedTypes.add(name);
       }
       return externalType;
     }
     return null;
+  }
+
+  private static boolean isEffectivelyExternal(JType type) {
+    return type instanceof JPrimitiveType
+        || type == JNullType.INSTANCE
+        || type.isExternal()
+        || (type instanceof JArrayType && isEffectivelyExternal(((JArrayType) type) .getElementType()));
   }
 
   private static String key(Signature signature, boolean isCstr) {
@@ -229,8 +235,7 @@ public class JribbleReferenceMapper {
     } else {
       newExternal =
           new JMethod(SourceOrigin.UNKNOWN, signature.name(), (JDeclaredType) getType(signature
-              .on().javaName()), getType(signature.returnType()), false, isStatic, false,
-              false);
+              .on().javaName()), getType(signature.returnType()), false, isStatic, false, false);
     }
     newExternal.freezeParamTypes();
     assert newExternal.isExternal();
@@ -260,6 +265,8 @@ public class JribbleReferenceMapper {
 
   private void put(JType... baseTypes) {
     for (JType type : baseTypes) {
+      // jribble uses "I" for int, "void" for void, so store both
+      types.put(type.getJavahSignatureName(), type);
       types.put(type.getName(), type);
     }
   }

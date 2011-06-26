@@ -1,13 +1,12 @@
 package com.google.gwt.dev.jjs.impl;
 
+import static com.google.gwt.dev.jjs.impl.AstUtils.toRef;
+import static com.google.gwt.thirdparty.guava.common.collect.Sets.newHashSet;
+
 import com.google.jribble.ast.Array;
 import com.google.jribble.ast.Primitive;
 
-import static com.google.gwt.thirdparty.guava.common.collect.Sets.newHashSet;
-
 import junit.framework.Assert;
-import static com.google.gwt.dev.jjs.impl.AstUtils.toRef;
-
 import junit.framework.TestCase;
 
 public class JribbleReferenceMapperTest extends TestCase {
@@ -15,8 +14,10 @@ public class JribbleReferenceMapperTest extends TestCase {
   public void testTouchedTypes() {
     JribbleReferenceMapper m = new JribbleReferenceMapper();
     m.getType(toRef("foo.T1"));
-    m.getType(new Primitive("int"));
+    m.getType(new Primitive("void"));
+    m.getType(new Primitive("I"));
     m.getType(new Array(toRef("foo.T4")));
+    m.getType(new Array(new Primitive("D")));
     m.getClassType("foo.T2");
     m.getInterfaceType("foo.T3");
     Assert.assertEquals(newHashSet("foo.T1", "foo.T2", "foo.T3", "foo.T4"), m.getTouchedTypes());
@@ -25,6 +26,7 @@ public class JribbleReferenceMapperTest extends TestCase {
     Assert.assertEquals(newHashSet(), m.getTouchedTypes());
 
     m.getType(toRef("foo.T1"));
+    m.getType(new Array(new Primitive("D")));
     Assert.assertEquals(newHashSet("foo.T1"), m.getTouchedTypes());
   }
 
