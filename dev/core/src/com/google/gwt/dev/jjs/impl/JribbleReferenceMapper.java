@@ -256,7 +256,6 @@ public class JribbleReferenceMapper {
   public void setSourceType(DeclaredType type, JDeclaredType jtype) {
     assert !jtype.isExternal();
     sourceTypes.put(type.name().javaName(), jtype);
-    touchedTypes.add(type.name().javaName());
   }
 
   private String intern(String s) {
