@@ -352,6 +352,7 @@ public class CompilationStateBuilder {
       }
       for (CompilationUnitBuilder cub : jribbleBuilders) {
         // assume one CompiledClass per CompilationUnit
+        System.out.println("Compiling " + cub.getTypeName());
         try {
           CompiledClass cc =
               new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()));
@@ -385,9 +386,9 @@ public class CompilationStateBuilder {
           compiler.addCompiledClass(cc);
           buildQueue.add(cub);
         } catch (Exception e) {
-          System.err.println(e.getMessage());
+          System.out.println(e.getMessage());
         } catch (AssertionError ae) {
-          System.err.println(ae.getMessage());
+          System.out.println(ae.getMessage());
         }
       }
     }

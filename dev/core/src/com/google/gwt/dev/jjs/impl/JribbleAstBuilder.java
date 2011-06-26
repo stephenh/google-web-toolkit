@@ -198,8 +198,6 @@ public class JribbleAstBuilder {
   private JClassType javaLangString = mapper.getClassType("java.lang.String");
 
   public Result process(DeclaredType declaredType) {
-    System.out.println("Making AST for " + declaredType.name().javaName());
-
     // todo: handle multiple DeclaredTypes within a single CompilationUnit?
     newTypes = new ArrayList<JDeclaredType>();
     methodArgNames = new MethodArgNamesLookup();
@@ -383,7 +381,7 @@ public class JribbleAstBuilder {
 
     public void addVar(String name, JLocal x) {
       Map<String, JLocal> peak = varStack.peek();
-      assert !peak.containsKey(name);
+      assert !peak.containsKey(name) : "redeclared variable " + name;
       peak.put(name, x);
     }
 
@@ -982,7 +980,7 @@ public class JribbleAstBuilder {
 
     private List<JExpression> params(List<Type> paramTypes, List<Expression> params,
         LocalStack local) {
-      assert paramTypes.size() == params.size();
+      assert paramTypes.size() == params.size() : "Mismatched params";
       List<JExpression> result = new LinkedList<JExpression>();
       for (int i = 0; i < params.size(); i++) {
         JExpression expr = expression(params.get(i), local);
