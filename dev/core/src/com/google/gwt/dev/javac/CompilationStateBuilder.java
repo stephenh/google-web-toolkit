@@ -29,7 +29,6 @@ import com.google.gwt.dev.jjs.impl.JribbleAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -354,32 +353,19 @@ public class CompilationStateBuilder {
         // assume one CompiledClass per CompilationUnit
         System.out.println("Compiling " + cub.getTypeName());
         try {
+          // pass in type name as source name, e.g.:
+          // type name = foo.Some$$anon$1
+          // internal  = foo/Some$$anon$1
+          // source    = foo.Some$$anon$1 (not foo.Some.$anon$1)
           CompiledClass cc =
-              new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()));
+              new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()), cub.getTypeName());
+          DeclaredType declaredType = JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
+          JribbleAstBuilder.Result result = jribbleAstBuilder.process(declaredType);
+          cub.setTypes(result.types);
+          cub.setDependencies(Dependencies.buildFromApiRefs(cc.getPackageName(), newArrayList(result.apiRefs)));
+          cub.setMethodArgs(result.methodArgNames);
           cub.setClasses(newArrayList(cc));
           cub.setJsniMethods(new ArrayList<JsniMethod>());
-          ArrayList<JDeclaredType> types = new ArrayList<JDeclaredType>();
-          Dependencies dependencies = new Dependencies();
-          MethodArgNamesLookup methodArgNames = new MethodArgNamesLookup();
-          if (cub.getTypeName().equals("scalatest.client.ScalaTest")) {
-            types.add(FakeAsts.makeScalaTest());
-          } else if (cub.getTypeName().equals("scalatest.client.GreetingService")) {
-            types.add(FakeAsts.makeGreetingService());
-          } else if (cub.getTypeName().equals("scalatest.client.GreetingServiceAsync")) {
-            types.add(FakeAsts.makeGreetingServiceAsync());
-          } else if (cub.getTypeName().equals("scalatest.client.ScalaTest$$anon$1")) {
-            types.add(FakeAsts.makeScalaTestInnerClass());
-          } else {
-            DeclaredType declaredType =
-                JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
-            JribbleAstBuilder.Result result = jribbleAstBuilder.process(declaredType);
-            types.addAll(result.types);
-            dependencies = Dependencies.buildFromApiRefs(cc.getPackageName(), newArrayList(result.apiRefs));
-            methodArgNames = result.methodArgNames;
-          }
-          cub.setTypes(types);
-          cub.setDependencies(dependencies);
-          cub.setMethodArgs(methodArgNames);
           // allValidClasses is maintained by the JDT UnitProcessorImpl
           allValidClasses.put(cc.getSourceName(), cc);
           // in case .java files refer to .scala files (e.g. in generated code)
