@@ -15,4 +15,9 @@ class Bar extends Object {
     l.add(1);
   }
 
+  public Bar(){
+    this.$init();
+    super();
+  }
+
 }

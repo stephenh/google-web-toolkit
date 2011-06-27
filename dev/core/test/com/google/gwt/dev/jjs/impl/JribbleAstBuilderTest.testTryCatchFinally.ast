@@ -20,4 +20,9 @@ class Bar extends Object {
     }
   }
 
+  public Bar(){
+    this.$init();
+    super();
+  }
+
 }

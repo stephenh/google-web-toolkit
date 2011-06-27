@@ -14,4 +14,9 @@ class Bar extends Object {
     return "hello";
   }
 
+  public Bar(){
+    this.$init();
+    super();
+  }
+
 }

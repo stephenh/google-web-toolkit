@@ -12,6 +12,7 @@ class Bar extends Object {
 
   public Bar(String s){
     this.$init();
+    super();
     Window.alert(s);
   }
 

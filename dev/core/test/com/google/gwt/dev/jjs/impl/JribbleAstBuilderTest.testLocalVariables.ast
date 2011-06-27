@@ -17,4 +17,9 @@ class Bar extends Object {
     s = "string";
   }
 
+  public Bar(){
+    this.$init();
+    super();
+  }
+
 }

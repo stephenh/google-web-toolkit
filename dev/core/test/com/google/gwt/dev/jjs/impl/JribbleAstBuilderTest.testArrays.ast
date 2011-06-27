@@ -17,4 +17,9 @@ class Bar extends Object {
     a[0] = "0";
   }
 
+  public Bar(){
+    this.$init();
+    super();
+  }
+
 }

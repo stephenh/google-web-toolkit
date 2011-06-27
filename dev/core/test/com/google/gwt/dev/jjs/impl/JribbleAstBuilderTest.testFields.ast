@@ -27,4 +27,9 @@ class Bar extends Object {
     Other.i = 1;
   }
 
+  public Bar(){
+    this.$init();
+    super();
+  }
+
 }

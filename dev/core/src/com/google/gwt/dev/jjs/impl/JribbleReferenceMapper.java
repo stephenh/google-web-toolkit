@@ -166,8 +166,10 @@ public class JribbleReferenceMapper {
     StringBuilder sb = new StringBuilder();
     sb.append(signature.on().javaName());
     sb.append('.');
-    // TODO ensure this is needed
-    // jribble method call signatures for cstr come in with "this" as the method name
+    // jribble Constructor's signature() method uses the type name
+    // as its method name. However, other places uses "this" as
+    // cstr method names. So we always key off of "this" as the
+    // method name if a cstr.
     if (isCstr) {
       sb.append("this");
     } else {

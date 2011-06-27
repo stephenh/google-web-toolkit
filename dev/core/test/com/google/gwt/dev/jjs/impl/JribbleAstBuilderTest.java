@@ -3,8 +3,10 @@ package com.google.gwt.dev.jjs.impl;
 import static com.google.gwt.dev.jjs.impl.AstUtils.toRef;
 
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNode;
@@ -65,19 +67,25 @@ import scala.collection.immutable.Set;
 
 public class JribbleAstBuilderTest extends TestCase {
 
+  private static final List<Type> noTypes = list();
+  private static final List<Expression> noExpressions = list();
+
   public void testEmptyClass() throws Exception {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
-    foo.ext = Option.apply(null); // package object ClassDefs have a None ext
+    foo.ext = Option.apply(null);
+    foo.classBody = list(foo.defaultCstr);
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testEmptyClass");
   }
+
+  // test package object ClassDef with a None ext
 
   public void testOneVoidMethod() throws Exception {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
     MethodDefBuilder zaz = new MethodDefBuilder("zaz");
     Option<Expression> none = Option.apply(null);
     zaz.stmts = list((Statement) new Return(none));
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testOneVoidMethod");
@@ -91,7 +99,7 @@ public class JribbleAstBuilderTest extends TestCase {
     MethodDefBuilder zaz = new MethodDefBuilder("zaz");
     zaz.returnType = toRef("java.lang.String");
     zaz.stmts = list((Statement) new Return(new Some<Expression>(new StringLiteral("hello"))));
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testOneStringMethod");
@@ -111,7 +119,7 @@ public class JribbleAstBuilderTest extends TestCase {
     Statement stringAssignment = new Assignment(new VarRef("s"), new StringLiteral("string"));
 
     zaz.stmts = list(intDef, intAssignment, stringDef, stringAssignment);
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testLocalVariables");
@@ -135,7 +143,7 @@ public class JribbleAstBuilderTest extends TestCase {
     Statement tryStmt = new Try(tryBlock, catches, Option.apply(finalBlock));
 
     zaz.stmts = list(tryStmt);
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testTryCatchFinally");
@@ -145,9 +153,8 @@ public class JribbleAstBuilderTest extends TestCase {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
     MethodDefBuilder zaz = new MethodDefBuilder("zaz");
 
-    // what do cstr signatures actually look like?
     Signature cstrSig =
-        new Signature(toRef("java.util.ArrayList"), "ArrayList", list((Type) new Primitive("int")),
+        new Signature(toRef("java.util.ArrayList"), "this", list((Type) new Primitive("int")),
             toRef("java.util.ArrayList"));
     Expression cstrArg = new IntLiteral(1);
     Statement varDef =
@@ -161,12 +168,14 @@ public class JribbleAstBuilderTest extends TestCase {
     Statement addCall = new MethodCall(new VarRef("l"), addSig, list(addParam));
 
     zaz.stmts = list(varDef, addCall);
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testNewCall");
     // ensure the external JMethod was frozen so getSignature doesn't NPE
-    JExpressionStatement addStmt = (JExpressionStatement) ((JMethodBody) fooType.getMethods().get(3).getBody()).getBlock().getStatements().get(1);
+    JExpressionStatement addStmt =
+        (JExpressionStatement) ((JMethodBody) fooType.getMethods().get(3).getBody()).getBlock()
+            .getStatements().get(1);
     Assert.assertEquals("add()V", ((JMethodCall) addStmt.getExpr()).getTarget().getSignature());
   }
 
@@ -175,21 +184,30 @@ public class JribbleAstBuilderTest extends TestCase {
 
     Set<String> modifs = new HashSet<String>();
     Constructor cstr1 =
-        new Constructor(modifs, "Bar", list(new ParamDef("s", toRef("java.lang.String"))),
-            new Block(list(newWindowAlertVar("s"))));
+        new Constructor(modifs, "this", list(new ParamDef("s", toRef("java.lang.String"))),
+            new Block(list(newSuperCstrCall("java.lang.Object"), newWindowAlertVar("s"))));
     // cstr2 calls cstr1, which means it shouldn't have an $init call
     ConstructorCall cstr1Call =
-        new ConstructorCall(new Signature(toRef("foo.Bar"), "Bar",
+        new ConstructorCall(new Signature(toRef("foo.Bar"), "this",
             list((Type) toRef("java.lang.String")), new Primitive("void")),
             list((Expression) new StringLiteral("a")));
     Constructor cstr2 =
-        new Constructor(modifs, "Bar", list(new ParamDef("i", toRef("java.lang.Integer"))),
+        new Constructor(modifs, "this", list(new ParamDef("i", toRef("java.lang.Integer"))),
             new Block(list(cstr1Call, newWindowAlertVar("i"))));
 
     foo.classBody = list((ClassBodyElement) cstr1, cstr2);
 
-    JDeclaredType fooType = process(foo);
+    JClassType fooType = (JClassType) process(foo);
     assertEquals(fooType, "testConstructors");
+
+    // ensure cstr2 calls cstr1
+    JMethod cstr1m = fooType.getMethods().get(3);
+    JMethod cstr2m = fooType.getMethods().get(4);
+    JMethodCall c =
+        (JMethodCall) ((JExpressionStatement) ((JMethodBody) cstr2m.getBody()).getStatements().get(
+            0)).getExpr();
+    Assert.assertEquals(cstr1m, c.getTarget());
+    Assert.assertEquals(true, c.isStaticDispatchOnly());
   }
 
   public void testFields() throws Exception {
@@ -222,7 +240,7 @@ public class JribbleAstBuilderTest extends TestCase {
     Statement assignfOther =
         new Assignment(new StaticFieldRef(toRef("foo.Other"), "i"), new IntLiteral(1));
     zaz.stmts = list(assignf1, assignf2, assignf3, assignfOther);
-    foo.classBody = list((ClassBodyElement) f1, f2, f3, f4, zaz.build());
+    foo.classBody = list(foo.defaultCstr, (ClassBodyElement) f1, f2, f3, f4, zaz.build());
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testFields");
@@ -267,7 +285,7 @@ public class JribbleAstBuilderTest extends TestCase {
         new Assignment(new ArrayRef(new VarRef("a"), new IntLiteral(0)), new StringLiteral("0"));
 
     zaz.stmts = list(s1, s2, s3, s4);
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testArrays");
@@ -284,7 +302,7 @@ public class JribbleAstBuilderTest extends TestCase {
             list((Type) toRef("java.lang.Object")), new Primitive("void")),
             list((Expression) new VarRef("l")));
     zaz.stmts = list(s1);
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
     jab.process(foo.build());
     // now do another unit that implements java.util.List, that requires it to be an interface
     ClassDefBuilder foo2 = new ClassDefBuilder("foo.Bar2");
@@ -297,10 +315,12 @@ public class JribbleAstBuilderTest extends TestCase {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
     MethodDefBuilder zaz = new MethodDefBuilder("zaz");
     zaz.params = list(new ParamDef("i", new Primitive("int")));
-    foo.classBody = list(zaz.build());
+    foo.classBody = list(foo.defaultCstr, zaz.build());
 
-    MethodArgNamesLookup methodArgNames = new JribbleAstBuilder().process(foo.build()).methodArgNames;
-    Assert.assertEquals("foo.Bar.zaz(I)V", methodArgNames.getMethods()[0]);
+    MethodArgNamesLookup methodArgNames =
+        new JribbleAstBuilder().process(foo.build()).methodArgNames;
+    Assert.assertEquals("foo.Bar.Bar()V", methodArgNames.getMethods()[0]);
+    Assert.assertEquals("foo.Bar.zaz(I)V", methodArgNames.getMethods()[1]);
     Assert.assertEquals("i", methodArgNames.lookup("foo.Bar.zaz(I)V")[0]);
   }
 
@@ -316,6 +336,13 @@ public class JribbleAstBuilderTest extends TestCase {
         list((Type) toRef("java.lang.String")), new Primitive("void")), list(alertParam));
   }
 
+  private static ConstructorCall newSuperCstrCall(String superClassName) {
+    // jribble uses "super" when calling super constructors, e.g.:
+    // (Ljava/lang/Object;::super()V;)();
+    return new ConstructorCall(new Signature(toRef(superClassName), "super", noTypes,
+        new Primitive("void")), noExpressions);
+  }
+
   private static class MethodDefBuilder {
     private final String name;
     Set<String> modifs = new HashSet<String>();
@@ -329,6 +356,10 @@ public class JribbleAstBuilderTest extends TestCase {
 
     private ClassBodyElement build() {
       return new MethodDef(modifs, returnType, name, params, new Some<Block>(new Block(stmts)));
+    }
+
+    private ClassBodyElement buildCstr() {
+      return new Constructor(modifs, name, params, new Block(stmts));
     }
   }
 
@@ -374,9 +405,13 @@ public class JribbleAstBuilderTest extends TestCase {
     private Option<Ref> ext = new Some<Ref>(toRef("java.lang.Object"));
     private List<Ref> impls = list();
     private List<ClassBodyElement> classBody = list();
+    private ClassBodyElement defaultCstr;
 
     private ClassDefBuilder(String name) {
       this.name = toRef(name);
+      MethodDefBuilder cstr = new MethodDefBuilder("this");
+      cstr.stmts = list((Statement) newSuperCstrCall("java.lang.Object"));
+      defaultCstr = cstr.buildCstr();
     }
 
     private ClassDef build() {

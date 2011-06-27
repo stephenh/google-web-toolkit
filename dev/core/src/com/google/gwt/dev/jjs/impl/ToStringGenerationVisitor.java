@@ -649,8 +649,10 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       thisType = thisType.getUnderlyingType();
       if (thisType == target.getEnclosingType()) {
         print(CHARS_THIS);
-      } else {
+      } else if (thisType instanceof JClassType && ((JClassType) thisType).getSuperClass() == target.getEnclosingType()) {
         print(CHARS_SUPER);
+      } else {
+        assert false : "invalid target type " + target.getEnclosingType();
       }
     } else {
       // Instance call.
@@ -713,6 +715,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNewInstance x, Context ctx) {
     print(CHARS_NEW);
+    assert x.isStaticDispatchOnly() : "should be isStaticDispatchOnly";
     JConstructor target = x.getTarget();
     printName(target);
     lparen();
