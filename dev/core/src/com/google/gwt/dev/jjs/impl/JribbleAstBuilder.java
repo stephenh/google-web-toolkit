@@ -307,7 +307,7 @@ public class JribbleAstBuilder {
     if (jrType instanceof ClassDef) {
       new AstWalker().classDef((ClassDef) jrType);
     } else if (jrType instanceof InterfaceDef) {
-      new AstWalker().interfaceDef((InterfaceDef) jrType);
+      // interfaces already have their methods created from createMembers
     } else {
       throw new RuntimeException("Unhandled type " + jrType);
     }
@@ -473,19 +473,6 @@ public class JribbleAstBuilder {
         }
         addClinitSuperCall(clazz);
         implementGetClass(clazz);
-      } catch (InternalCompilerException e) {
-        e.addNode(clazz);
-        throw e;
-      }
-    }
-
-    private void interfaceDef(InterfaceDef def) {
-      JInterfaceType clazz = mapper.getInterfaceType(def.name().javaName());
-      assert !clazz.isExternal();
-      try {
-        for (MethodDef i : def.jbody()) {
-          methodDef(i, clazz, def);
-        }
       } catch (InternalCompilerException e) {
         e.addNode(clazz);
         throw e;
@@ -799,15 +786,6 @@ public class JribbleAstBuilder {
         local.pushBlock();
         JBlock block = body.getBlock();
         block(def.body().get(), block, local);
-      }
-    }
-
-    private void methodDef(MethodDef def, JInterfaceType enclosingClass, InterfaceDef intDef) {
-      JMethod m =
-          mapper.getMethod(def.signature(intDef.name()), def.modifs().contains("static"), false);
-      Map<String, JParameter> params = new HashMap<String, JParameter>();
-      for (JParameter x : m.getParams()) {
-        params.put(x.getName(), x);
       }
     }
 
