@@ -349,6 +349,7 @@ public class CompilationStateBuilder {
           i.remove();
         }
       }
+      // consider threading this out--can take awhile
       for (CompilationUnitBuilder cub : jribbleBuilders) {
         // assume one CompiledClass per CompilationUnit
         System.out.println("Compiling " + cub.getTypeName());
@@ -357,6 +358,8 @@ public class CompilationStateBuilder {
           // type name = foo.Some$$anon$1
           // internal  = foo/Some$$anon$1
           // source    = foo.Some$$anon$1 (not foo.Some.$anon$1)
+          // Otherwise when validating units' api refs (which are in the type name form), allValidClasses
+          // is keyed off source name, so if they don't match, we'll incorrectly invalidate units.
           CompiledClass cc =
               new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()), cub.getTypeName());
           DeclaredType declaredType = JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
@@ -366,9 +369,10 @@ public class CompilationStateBuilder {
           cub.setMethodArgs(result.methodArgNames);
           cub.setClasses(newArrayList(cc));
           cub.setJsniMethods(new ArrayList<JsniMethod>());
-          // allValidClasses is maintained by the JDT UnitProcessorImpl
+          // allValidClasses is maintained by the JDT UnitProcessorImpl, which we don't hit, so update it here
           allValidClasses.put(cc.getSourceName(), cc);
-          // in case .java files refer to .scala files (e.g. in generated code)
+          // Add classes to the JDT compiler in case .java files refer to .scala files
+          // (Can't use addValidUnit because our CompilationUnit hasn't been built yet in the build queue yetj)
           compiler.addCompiledClass(cc);
           buildQueue.add(cub);
         } catch (Exception e) {

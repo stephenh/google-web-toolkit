@@ -499,7 +499,7 @@ public class JdtCompiler {
     addBinaryTypes(unit.getCompiledClasses());
   }
 
-  // added for jribble to add its CompiledClasses before its CompilationUnit is built
+  // added for jribble to add its CompiledClasses before the JDT compiler is invoked
   public void addCompiledClass(CompiledClass cc) {
     addPackages(cc.getPackageName());
     binaryTypes.put(cc.getInternalName(), cc);
