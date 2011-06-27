@@ -110,6 +110,7 @@ public class JribbleReferenceMapper {
     if (existing != null) {
       return existing;
     }
+    name = intern(name);
     JClassType newExternal = new JClassType(name);
     assert newExternal.isExternal();
     types.put(name, newExternal);
@@ -127,6 +128,7 @@ public class JribbleReferenceMapper {
     if (existing != null && existing instanceof JInterfaceType) {
       return (JInterfaceType) existing;
     }
+    name = intern(name);
     JInterfaceType newExternal = new JInterfaceType(name);
     assert newExternal.isExternal();
     types.put(name, newExternal);
@@ -149,7 +151,7 @@ public class JribbleReferenceMapper {
     if (externalType != null) {
       assert isEffectivelyExternal(externalType);
       if (!(externalType instanceof JPrimitiveType || externalType == JNullType.INSTANCE || externalType instanceof JArrayType)) {
-        touchedTypes.add(name);
+        touchedTypes.add(intern(name));
       }
       return externalType;
     }
@@ -265,7 +267,7 @@ public class JribbleReferenceMapper {
     sourceTypes.put(type.name().javaName(), jtype);
   }
 
-  private String intern(String s) {
+  private static String intern(String s) {
     return stringInterner.intern(s);
   }
 

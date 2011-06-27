@@ -67,6 +67,8 @@ class Dependencies implements Serializable {
    * For each apiRef in java.lang, say java.lang.String, we add a simple type of
    * "String". This means, for compilation "foo.bar.Zaz", it will be invalidated
    * if someone introduces "foo.bar.String", as the import precedence changes.
+   *
+   * {@code myPackage} and {@code apiRefs} should already be interned.
    */
   static Dependencies buildFromApiRefs(String myPackage, List<String> apiRefs) {
     List<String> simpleRefs = new ArrayList<String>();
@@ -74,17 +76,17 @@ class Dependencies implements Serializable {
     for (String apiRef : apiRefs) {
       int i = 0;
       while ((i = apiRef.indexOf('.', i + 1)) > -1) {
-        qualifiedRefs.add(apiRef.substring(0, i));
+        qualifiedRefs.add(interner.intern(apiRef.substring(0, i)));
       }
       qualifiedRefs.add(apiRef);
       if (apiRef.startsWith("java.lang.")) {
-        simpleRefs.add(apiRef.substring("java.lang.".length()));
+        simpleRefs.add(interner.intern(apiRef.substring("java.lang.".length())));
       }
     }
-    // TODO: Do we need to intern qualifiedRefs, simpleRefs, and apiRefs?
     return new Dependencies(myPackage, qualifiedRefs, simpleRefs, apiRefs);
   }
 
+  private static final StringInterner interner = StringInterner.get();
   Map<String, Ref> qualified = new HashMap<String, Ref>();
   Map<String, Ref> simple = new HashMap<String, Ref>();
   private final List<String> apiRefs;
