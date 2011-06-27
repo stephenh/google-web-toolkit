@@ -326,7 +326,7 @@ public class JribbleAstBuilder {
 
   /** Creates a source method, without the code inside yet. */
   private void createMethod(JDeclaredType gwtType, DeclaredType jrType, MethodDef jrMethod) {
-    boolean isAbstract = jrMethod.modifs().contains("abstract");
+    boolean isAbstract = jrMethod.modifs().contains("abstract") || jrType instanceof InterfaceDef;
     boolean isStatic = jrMethod.modifs().contains("static");
     boolean isFinal = jrMethod.modifs().contains("final");
     boolean isPrivate = jrMethod.modifs().contains("private");
