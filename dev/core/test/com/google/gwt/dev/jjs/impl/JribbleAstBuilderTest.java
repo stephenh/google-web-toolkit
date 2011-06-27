@@ -96,6 +96,19 @@ public class JribbleAstBuilderTest extends TestCase {
     Assert.assertEquals(JPrimitiveType.VOID, fooType.getMethods().get(3).getOriginalReturnType());
   }
 
+  public void testMethodCall() throws Exception {
+    ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
+    MethodDefBuilder zaz = new MethodDefBuilder("zaz");
+    zaz.stmts = list(newWindowAlert("hello"));
+    foo.classBody = list(foo.defaultCstr, zaz.build());
+
+    JDeclaredType fooType = process(foo);
+    JMethodCall call =
+        (JMethodCall) ((JExpressionStatement) ((JMethodBody) fooType.getMethods().get(3)
+            .getBody()).getStatements().get(0)).getExpr();
+    Assert.assertEquals("alert(Ljava/lang/String;)V", call.getTarget().getSignature());
+  }
+
   public void testOneStringMethod() throws Exception {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
     MethodDefBuilder zaz = new MethodDefBuilder("zaz");
@@ -178,7 +191,7 @@ public class JribbleAstBuilderTest extends TestCase {
     JExpressionStatement addStmt =
         (JExpressionStatement) ((JMethodBody) fooType.getMethods().get(3).getBody()).getBlock()
             .getStatements().get(1);
-    Assert.assertEquals("add()V", ((JMethodCall) addStmt.getExpr()).getTarget().getSignature());
+    Assert.assertEquals("add(Ljava/lang/Object;)V", ((JMethodCall) addStmt.getExpr()).getTarget().getSignature());
   }
 
   public void testConstructors() throws Exception {

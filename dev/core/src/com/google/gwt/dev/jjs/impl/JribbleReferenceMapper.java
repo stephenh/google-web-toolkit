@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNullType;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -238,6 +239,10 @@ public class JribbleReferenceMapper {
       newExternal =
           new JMethod(SourceOrigin.UNKNOWN, signature.name(), (JDeclaredType) getType(signature
               .on().javaName()), getType(signature.returnType()), false, isStatic, false, false);
+    }
+    int i = 0;
+    for (Type type : signature.jparamTypes()) {
+      newExternal.addParam(new JParameter(SourceOrigin.UNKNOWN, "x" + (i++), getType(type), false, false, newExternal));
     }
     newExternal.freezeParamTypes();
     assert newExternal.isExternal();
