@@ -81,7 +81,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   private transient String signature;
 
   /** Create a bare-bones external field. */
-  public JField(String signature, JDeclaredType enclosingType) {
+  private JField(String signature, JDeclaredType enclosingType) {
     this(SourceOrigin.UNKNOWN, signature.substring(0, signature.indexOf(':')), enclosingType, JNullType.INSTANCE, false, Disposition.NONE);
     this.signature = signature;
   }
