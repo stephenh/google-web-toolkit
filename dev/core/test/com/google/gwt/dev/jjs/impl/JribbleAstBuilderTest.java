@@ -40,6 +40,7 @@ import com.google.jribble.ast.Statement;
 import com.google.jribble.ast.StaticFieldRef;
 import com.google.jribble.ast.StaticMethodCall;
 import com.google.jribble.ast.StringLiteral;
+import com.google.jribble.ast.SuperRef$;
 import com.google.jribble.ast.ThisRef$;
 import com.google.jribble.ast.Try;
 import com.google.jribble.ast.Type;
@@ -69,6 +70,7 @@ public class JribbleAstBuilderTest extends TestCase {
 
   private static final List<Type> noTypes = list();
   private static final List<Expression> noExpressions = list();
+  private static final Expression superRef = SuperRef$.MODULE$;
 
   public void testEmptyClass() throws Exception {
     ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
@@ -322,6 +324,19 @@ public class JribbleAstBuilderTest extends TestCase {
     Assert.assertEquals("foo.Bar.Bar()V", methodArgNames.getMethods()[0]);
     Assert.assertEquals("foo.Bar.zaz(I)V", methodArgNames.getMethods()[1]);
     Assert.assertEquals("i", methodArgNames.lookup("foo.Bar.zaz(I)V")[0]);
+  }
+
+  public void testSuperCall() throws Exception {
+    ClassDefBuilder foo = new ClassDefBuilder("foo.Bar");
+    MethodDefBuilder zaz = new MethodDefBuilder("toString");
+    Statement superCall =
+        new MethodCall(superRef, new Signature(toRef("java.lang.Object"), "toString", noTypes,
+            toRef("java.lang.String")), noExpressions);
+    zaz.stmts = list(superCall);
+    zaz.returnType = toRef("java.lang.String");
+    foo.classBody = list(foo.defaultCstr, zaz.build());
+
+    assertEquals(process(foo), "testSuperCall");
   }
 
   private static Statement newWindowAlert(String message) {

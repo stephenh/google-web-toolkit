@@ -436,6 +436,8 @@ public class JribbleAstBuilder {
   /** Given a top-level ClassDef/InterfaceDef, creates a full GWT AST. */
   private class AstWalker {
 
+    private final Expression superRef = SuperRef$.MODULE$;
+
     private JExpressionStatement assignment(Assignment assignment, LocalStack local) {
       JExpression lhs = expression(assignment.lhs(), local);
       JExpression rhs = expression(assignment.rhs(), local);
@@ -778,6 +780,9 @@ public class JribbleAstBuilder {
       List<JExpression> params = params(call.signature().jparamTypes(), call.jparams(), local);
       JMethodCall jcall = new JMethodCall(UNKNOWN, on, method);
       jcall.addArgs(params);
+      if (call.on() == superRef) {
+        jcall.setStaticDispatchOnly();
+      }
       return jcall;
     }
 
