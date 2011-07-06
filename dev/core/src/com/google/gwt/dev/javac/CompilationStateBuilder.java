@@ -354,14 +354,8 @@ public class CompilationStateBuilder {
         // assume one CompiledClass per CompilationUnit
         System.out.println("Compiling " + cub.getTypeName());
         try {
-          // pass in type name as source name, e.g.:
-          // type name = foo.Some$$anon$1
-          // internal  = foo/Some$$anon$1
-          // source    = foo.Some$$anon$1 (not foo.Some.$anon$1)
-          // Otherwise when validating units' api refs (which are in the type name form), allValidClasses
-          // is keyed off source name, so if they don't match, we'll incorrectly invalidate units.
           CompiledClass cc =
-              new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()), cub.getTypeName());
+              new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()));
           DeclaredType declaredType = JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
           JribbleAstBuilder.Result result = jribbleAstBuilder.process(declaredType);
           cub.setTypes(result.types);

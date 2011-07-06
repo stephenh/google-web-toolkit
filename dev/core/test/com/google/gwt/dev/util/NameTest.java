@@ -50,6 +50,8 @@ public class NameTest extends TestCase {
         BinaryName.toInternalName("org.test.Foo$Bar$Baz$"));
     assertEquals("org/test/Foo$Bar$Baz$1",
         BinaryName.toInternalName("org.test.Foo$Bar$Baz$1"));
+    assertEquals("org/test/Foo$$Bar$1",
+        BinaryName.toInternalName("org.test.Foo$$Bar$1"));
     assertEquals("org.test.Foo$Bar",
         BinaryName.getInnerClassName("org.test.Foo", "Bar"));
     assertEquals("org.test.Foo",
@@ -94,6 +96,8 @@ public class NameTest extends TestCase {
         InternalName.toSourceName("org/test/Foo$Bar$Baz"));
     assertEquals("org.test.Foo.Bar.Baz$",
         InternalName.toSourceName("org/test/Foo$Bar$Baz$"));
+    assertEquals("org.test.Foo$$Bar$1",
+        InternalName.toSourceName("org/test/Foo$$Bar$1"));
     assertEquals("org.test.Foo", InternalName.toBinaryName("org/test/Foo"));
     assertEquals("org.test.Foo$Bar",
         InternalName.toBinaryName("org/test/Foo$Bar"));
@@ -103,6 +107,8 @@ public class NameTest extends TestCase {
         InternalName.toBinaryName("org/test/Foo$Bar$Baz$"));
     assertEquals("org.test.Foo$Bar$Baz$1",
         InternalName.toBinaryName("org/test/Foo$Bar$Baz$1"));
+    assertEquals("org.test.Foo$$Bar$1",
+        InternalName.toBinaryName("org/test/Foo$$Bar$1"));
     assertEquals("org/test/Foo$Bar",
         InternalName.getInnerClassName("org/test/Foo", "Bar"));
     assertEquals("org/test/Foo",

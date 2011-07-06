@@ -14,8 +14,6 @@
 
 package com.google.gwt.dev.jjs.impl;
 
-import static com.google.gwt.thirdparty.guava.common.collect.Sets.newHashSet;
-
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -80,6 +78,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.jribble.ast.And;
 import com.google.jribble.ast.ArrayInitializer;
 import com.google.jribble.ast.ArrayLength;
@@ -156,6 +155,7 @@ import com.google.jribble.ast.While;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -212,7 +212,7 @@ public class JribbleAstBuilder {
     buildTheCode(declaredType);
 
     // Clean up.
-    Result result = new Result(newTypes, newHashSet(mapper.getTouchedTypes()), methodArgNames);
+    Result result = new Result(newTypes, binaryNamesToSourceNames(mapper.getTouchedTypes()), methodArgNames);
     mapper.clearSource();
     methodArgNames = null;
     newTypes = null;
@@ -1031,6 +1031,14 @@ public class JribbleAstBuilder {
 
   private static String intern(String s) {
     return stringInterner.intern(s);
+  }
+  
+  private static Set<String> binaryNamesToSourceNames(Set<String> binaryNames) {
+    Set<String> sourceNames = new HashSet<String>(binaryNames.size());
+    for (String binaryName : binaryNames) {
+      sourceNames.add(intern(BinaryName.toSourceName(binaryName)));
+    }
+    return sourceNames;
   }
 
 }

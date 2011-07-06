@@ -71,17 +71,6 @@ public final class CompiledClass implements Serializable {
     this.isLocal = isLocal;
   }
 
-  // hack for jribble to force sourceName == typeName
-  CompiledClass(byte[] classBytes, CompiledClass enclosingClass, boolean isLocal,
-      String internalName, String sourceName) {
-    this.enclosingClass = enclosingClass;
-    this.internalName = StringInterner.get().intern(internalName);
-    this.sourceName = StringInterner.get().intern(sourceName);
-    this.cacheToken = diskCache.writeByteArray(classBytes);
-    this.isLocal = isLocal;
-  }
-
-
   /**
    * Returns the bytes of the compiled class.
    */
