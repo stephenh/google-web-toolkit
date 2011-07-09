@@ -17,6 +17,8 @@ package com.google.gwt.validation.tck;
 
 import junit.framework.Test;
 
+import org.hibernate.jsr303.tck.tests.constraints.groups.DefaultGroupRedefinitionCompileTest;
+import org.hibernate.jsr303.tck.tests.constraints.groups.DefaultGroupRedefinitionGwtTest;
 import org.hibernate.jsr303.tck.tests.constraints.groups.GroupGwtTest;
 import org.hibernate.jsr303.tck.util.TckTestSuiteWrapper;
 
@@ -27,6 +29,8 @@ public class ConstraintsGroupsGwtSuite {
   public static Test suite() {
     TckTestSuiteWrapper suite = new TckTestSuiteWrapper(
         "TCK for GWT Validation, constraints groups package");
+    suite.addTestSuite(DefaultGroupRedefinitionCompileTest.class);
+    suite.addTestSuite(DefaultGroupRedefinitionGwtTest.class);
     suite.addTestSuite(GroupGwtTest.class);
     return suite;
   }

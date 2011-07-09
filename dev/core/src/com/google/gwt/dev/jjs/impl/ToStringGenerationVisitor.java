@@ -76,6 +76,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
+import com.google.gwt.dev.jjs.ast.JSeedIdOf;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
@@ -135,6 +136,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_PROTECTED = "protected ".toCharArray();
   protected static final char[] CHARS_PUBLIC = "public ".toCharArray();
   protected static final char[] CHARS_RETURN = "return".toCharArray();
+  protected static final char[] CHARS_SEEDIDOF = " JSeedIdOf ".toCharArray();
   protected static final char[] CHARS_SLASHSTAR = "/*".toCharArray();
   protected static final char[] CHARS_STARSLASH = "*/".toCharArray();
   protected static final char[] CHARS_STATIC = "static ".toCharArray();
@@ -679,7 +681,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNameOf x, Context ctx) {
     print(CHARS_SLASHSTAR);
-    print(CHARS_NAMEOF);
+    print(x instanceof JSeedIdOf ? CHARS_SEEDIDOF : CHARS_NAMEOF);
     print(CHARS_STARSLASH);
     printStringLiteral(x.getNode().getName());
     return false;
@@ -1066,10 +1068,18 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   protected void printMethodHeader(JMethod x) {
     // Modifiers
-    if (x.isPrivate()) {
-      print(CHARS_PRIVATE);
-    } else {
-      print(CHARS_PUBLIC);
+    switch (x.getAccess()) {
+      case PUBLIC:
+        print(CHARS_PUBLIC);
+        break;
+      case PROTECTED:
+        print(CHARS_PROTECTED);
+        break;
+      case PRIVATE:
+        print(CHARS_PRIVATE);
+        break;
+      case DEFAULT:
+        break;
     }
     printStaticFlag(x);
     printAbstractFlag(x);

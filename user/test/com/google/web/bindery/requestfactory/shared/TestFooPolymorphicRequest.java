@@ -17,7 +17,8 @@ package com.google.web.bindery.requestfactory.shared;
 
 /**
  * Just to test the
- * {@link com.google.web.bindery.requestfactory.gwt.rebind.RequestFactoryGenerator} code.
+ * {@link com.google.web.bindery.requestfactory.gwt.rebind.RequestFactoryGenerator}
+ * code.
  */
 @Service(com.google.web.bindery.requestfactory.server.SimpleFoo.class)
 public interface TestFooPolymorphicRequest extends RequestContext {

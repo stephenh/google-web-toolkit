@@ -21,6 +21,7 @@ import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -1116,6 +1117,10 @@ public class GwtAstBuilder {
                 scope.enclosingSourceType().enclosingTypeAt(
                     (x.bits & ASTNode.DepthMASK) >> ASTNode.DepthSHIFT);
             receiver = makeThisReference(info, targetType, true, scope);
+          } else if (x.receiver.sourceStart == 0) {
+            // Synthetic this ref with bad source info; fix the info.
+            JThisRef oldRef = (JThisRef) receiver;
+            receiver = new JThisRef(info, oldRef.getClassType());
           }
         }
 
@@ -1991,25 +1996,33 @@ public class GwtAstBuilder {
      * arguments, but with a different type signature.
      */
     private void createBridgeMethod(SyntheticMethodBinding jdtBridgeMethod) {
-      JMethod implMethod = typeMap.get(jdtBridgeMethod.targetMethod);
-      SourceInfo info = implMethod.getSourceInfo();
-      String[] paramNames = null;
-      List<JParameter> implParams = implMethod.getParams();
-      if (jdtBridgeMethod.parameters != null) {
-        int paramCount = implParams.size();
-        assert paramCount == jdtBridgeMethod.parameters.length;
-        paramNames = new String[paramCount];
-        for (int i = 0; i < paramCount; ++i) {
-          paramNames[i] = implParams.get(i).getName();
-        }
+      JMethod implmeth = typeMap.get(jdtBridgeMethod.targetMethod);
+      SourceInfo info = implmeth.getSourceInfo();
+      JMethod bridgeMethod =
+          new JMethod(info, implmeth.getName(), curClass.type, typeMap
+              .get(jdtBridgeMethod.returnType), false, false, implmeth.isFinal(), implmeth
+              .getAccess());
+      typeMap.setMethod(jdtBridgeMethod, bridgeMethod);
+      bridgeMethod.setBody(new JMethodBody(info));
+      curClass.type.addMethod(bridgeMethod);
+      bridgeMethod.setSynthetic();
+      int paramIdx = 0;
+      List<JParameter> implParams = implmeth.getParams();
+      for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
+        JParameter param = implParams.get(paramIdx++);
+        JType paramType = typeMap.get(jdtParamType.erasure());
+        JParameter newParam =
+            new JParameter(param.getSourceInfo(), param.getName(), paramType, true, false,
+                bridgeMethod);
+        bridgeMethod.addParam(newParam);
       }
-      JMethod bridgeMethod = createSynthicMethodFromBinding(info, jdtBridgeMethod, paramNames);
-      if (implMethod.isFinal()) {
-        bridgeMethod.setFinal();
+      for (ReferenceBinding exceptionReference : jdtBridgeMethod.thrownExceptions) {
+        bridgeMethod.addThrownException((JClassType) typeMap.get(exceptionReference.erasure()));
       }
+      bridgeMethod.freezeParamTypes();
 
       // create a call and pass all arguments through, casting if necessary
-      JMethodCall call = new JMethodCall(info, makeThisRef(info), implMethod);
+      JMethodCall call = new JMethodCall(info, makeThisRef(info), implmeth);
       for (int i = 0; i < bridgeMethod.getParams().size(); i++) {
         JParameter param = bridgeMethod.getParams().get(i);
         JParameterRef paramRef = new JParameterRef(info, param);
@@ -2145,15 +2158,13 @@ public class GwtAstBuilder {
       assert ("getClass".equals(method.getName()));
       SourceInfo info = method.getSourceInfo();
       if ("com.google.gwt.lang.Array".equals(type.getName())) {
-        // Special implementation: return this.arrayClass
-        JField arrayClassField = null;
-        for (JField field : type.getFields()) {
-          if ("arrayClass".equals(field.getName())) {
-            arrayClassField = field;
-          }
-        }
-        assert arrayClassField != null;
-        implementMethod(method, new JFieldRef(info, makeThisRef(info), arrayClassField, type));
+        /*
+         * Don't implement, fall through to Object.getClass(). Array emulation code
+         * in com.google.gwt.lang.Array invokes Array.getClass() and expects to get the
+         * class literal for the actual runtime type of the array (e.g. Foo[].class) and
+         * not Array.class.
+         */
+        type.getMethods().remove(2);
       } else {
         implementMethod(method, new JClassLiteral(info, type));
       }
@@ -2673,7 +2684,7 @@ public class GwtAstBuilder {
         JDeclarationStatement declStmt = new JDeclarationStatement(info, mapRef, call);
         JMethod clinit =
             createSyntheticMethod(info, "$clinit", mapClass, JPrimitiveType.VOID, false, true,
-                true, true);
+                true, AccessModifier.PRIVATE);
         JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();
         clinitBlock.addStmt(declStmt);
       }
@@ -2747,15 +2758,14 @@ public class GwtAstBuilder {
     }
   }
 
-  public static boolean ENABLED = System.getProperties().containsKey("x.gwt.astBuilder");
+  public static boolean ENABLED = !System.getProperties().containsKey("x.gwt.noAstBuilder");
 
   /**
    * Manually tracked version count.
    * 
    * TODO(zundel): something much more awesome?
    */
-  private static final long AST_VERSION = 1;
-
+  private static final long AST_VERSION = 3;
   private static final char[] _STRING = "_String".toCharArray();
   private static final String ARRAY_LENGTH_FIELD = "length";
 
@@ -3012,16 +3022,19 @@ public class GwtAstBuilder {
        * is always in slot 1.
        */
       assert type.getMethods().size() == 0;
-      createSyntheticMethod(info, "$clinit", type, JPrimitiveType.VOID, false, true, true, true);
+      createSyntheticMethod(info, "$clinit", type, JPrimitiveType.VOID, false, true, true,
+          AccessModifier.PRIVATE);
 
       if (type instanceof JClassType) {
         assert type.getMethods().size() == 1;
-        createSyntheticMethod(info, "$init", type, JPrimitiveType.VOID, false, false, true, true);
+        createSyntheticMethod(info, "$init", type, JPrimitiveType.VOID, false, false, true,
+            AccessModifier.PRIVATE);
 
         // Add a getClass() implementation for all non-Object classes.
         if (type != javaLangObject && !JSORestrictionsChecker.isJsoSubclass(binding)) {
           assert type.getMethods().size() == 2;
-          createSyntheticMethod(info, "getClass", type, javaLangClass, false, false, false, false);
+          createSyntheticMethod(info, "getClass", type, javaLangClass, false, false, false,
+              AccessModifier.PUBLIC);
         }
       }
 
@@ -3032,13 +3045,13 @@ public class GwtAstBuilder {
               binding.getExactMethod(VALUE_OF, new TypeBinding[]{x.scope.getJavaLangString()},
                   curCud.scope);
           assert valueOfBinding != null;
-          createSynthicMethodFromBinding(info, valueOfBinding, new String[]{"name"});
+          createSyntheticMethodFromBinding(info, valueOfBinding, new String[]{"name"});
         }
         {
           assert type.getMethods().size() == 4;
           MethodBinding valuesBinding = binding.getExactMethod(VALUES, NO_TYPES, curCud.scope);
           assert valuesBinding != null;
-          createSynthicMethodFromBinding(info, valuesBinding, null);
+          createSyntheticMethodFromBinding(info, valuesBinding, null);
         }
       }
 
@@ -3114,7 +3127,7 @@ public class GwtAstBuilder {
     } else {
       method =
           new JMethod(info, intern(b.selector), enclosingType, typeMap.get(b.returnType), b
-              .isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate());
+              .isAbstract(), b.isStatic(), b.isFinal(), AccessModifier.fromMethodBinding(b));
     }
 
     // User args.
@@ -3171,9 +3184,9 @@ public class GwtAstBuilder {
   }
 
   private JMethod createSyntheticMethod(SourceInfo info, String name, JDeclaredType enclosingType,
-      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal, boolean isPrivate) {
+      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal, AccessModifier access) {
     JMethod method =
-        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, isPrivate);
+        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, access);
     method.freezeParamTypes();
     method.setSynthetic();
     method.setBody(new JMethodBody(info));
@@ -3181,7 +3194,7 @@ public class GwtAstBuilder {
     return method;
   }
 
-  private JMethod createSynthicMethodFromBinding(SourceInfo info, MethodBinding binding,
+  private JMethod createSyntheticMethodFromBinding(SourceInfo info, MethodBinding binding,
       String[] paramNames) {
     JMethod method = typeMap.createMethod(info, binding, paramNames);
     assert !method.isExternal();

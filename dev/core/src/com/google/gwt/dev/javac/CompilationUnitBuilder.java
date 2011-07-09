@@ -35,7 +35,7 @@ public abstract class CompilationUnitBuilder {
   static class GeneratedCompilationUnitBuilder extends CompilationUnitBuilder {
     private final GeneratedUnit generatedUnit;
 
-    public GeneratedCompilationUnitBuilder(GeneratedUnit generatedUnit) {
+    private GeneratedCompilationUnitBuilder(GeneratedUnit generatedUnit) {
       this.generatedUnit = generatedUnit;
     }
 
@@ -86,14 +86,9 @@ public abstract class CompilationUnitBuilder {
 
     private final String typeName;
 
-    public ResourceCompilationUnitBuilder(Resource resource) {
-      this(Shared.toTypeName(resource.getPath()), resource);
-    }
-
-    public ResourceCompilationUnitBuilder(String typeName, Resource resource) {
+    private ResourceCompilationUnitBuilder(Resource resource) {
+      this.typeName = Shared.toTypeName(resource.getPath());
       this.resource = resource;
-      this.typeName = typeName;
-      assert typeName.equals(Shared.toTypeName(resource.getPath()));
     }
 
     @Override
@@ -134,9 +129,9 @@ public abstract class CompilationUnitBuilder {
        * as too stale than too fresh.
        */
       lastModifed = resource.getLastModified();
-      InputStream in = resource.openContents();
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
       try {
+        InputStream in = resource.openContents();
         Util.copy(in, out);
       } catch (IOException e) {
         throw new RuntimeException("Unexpected error reading resource '" + resource + "'", e);

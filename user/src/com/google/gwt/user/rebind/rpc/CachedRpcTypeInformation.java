@@ -48,24 +48,15 @@ public class CachedRpcTypeInformation implements Serializable {
     recordTypes(serializableFromBrowser, instantiableFromBrowser, typesFromBrowser);
     recordTypes(serializableToBrowser, instantiableToBrowser, typesToBrowser);
 
+    assert (customSerializersUsed != null);
     for (JType type : customSerializersUsed) {
       addCustomSerializerType(type);
     }
 
+    assert (typesNotUsingCustomSerializers != null);
     for (JType type : typesNotUsingCustomSerializers) {
       addTypeNotUsingCustomSerializer(type);
     }
-  }
-
-  public void addCustomSerializerType(JType type) {
-    String sourceName = type.getQualifiedSourceName();
-    lastModifiedTimes.put(sourceName, getLastModifiedTime(type));
-    customSerializerTypes.add(sourceName);
-  }
-
-  public void addTypeNotUsingCustomSerializer(JType type) {
-    String sourceName = type.getQualifiedSourceName();
-    typesNotUsingCustomSerializer.add(sourceName);
   }
 
   public boolean checkLastModifiedTime(JType type) {
@@ -134,28 +125,15 @@ public class CachedRpcTypeInformation implements Serializable {
     return typesNotUsingCustomSerializer.contains(type.getQualifiedSourceName());
   }
 
-  /*
-   * Finds a last modified time for a type, for testing cacheability.
-   */
-  public long getLastModifiedTime(JType type) {
-    JType typeToCheck;
-    if (type instanceof JArrayType) {
-      typeToCheck = type.getLeafType();
-    } else if (type instanceof JRawType) {
-      typeToCheck = ((JRawType) type).getGenericType();
-    } else {
-      assert type instanceof JRealClassType;
-      typeToCheck = type;
-    }
+  private void addCustomSerializerType(JType type) {
+    String sourceName = type.getQualifiedSourceName();
+    lastModifiedTimes.put(sourceName, getLastModifiedTime(type));
+    customSerializerTypes.add(sourceName);
+  }
 
-    if (typeToCheck instanceof JRealClassType) {
-      return ((JRealClassType) typeToCheck).getLastModifiedTime();
-    } else {
-      // we have a type that is an array with a primitive leafType
-      assert typeToCheck instanceof JPrimitiveType;
-      // this type is never out of date
-      return Long.MAX_VALUE;
-    }
+  private void addTypeNotUsingCustomSerializer(JType type) {
+    String sourceName = type.getQualifiedSourceName();
+    typesNotUsingCustomSerializer.add(sourceName);
   }
 
   private boolean checkTypes(TreeLogger logger, Set<String> serializable, Set<String> instantiable,
@@ -170,6 +148,26 @@ public class CachedRpcTypeInformation implements Serializable {
       }
     }
     return true;
+  }
+
+  /*
+   * Finds a last modified time for a type, for testing cacheability.
+   */
+  private long getLastModifiedTime(JType type) {
+    if (type instanceof JArrayType) {
+      return getLastModifiedTime(type.getLeafType());
+    } else if (type instanceof JRawType) {
+      return getLastModifiedTime(((JRawType) type).getGenericType());
+    }
+
+    if (type instanceof JRealClassType) {
+      return ((JRealClassType) type).getLastModifiedTime();
+    } else {
+      // we have a type that is an array with a primitive leafType
+      assert type instanceof JPrimitiveType;
+      // this type is never out of date
+      return Long.MAX_VALUE;
+    }
   }
 
   private void logDifferencesBetweenCurrentAndCachedTypes(TreeLogger logger, JType[] currentTypes,
@@ -190,6 +188,7 @@ public class CachedRpcTypeInformation implements Serializable {
 
   private void recordTypes(Set<String> serializable, Set<String> instantiable,
       SerializableTypeOracle sto) {
+    assert (sto != null);
     for (JType type : sto.getSerializableTypes()) {
       String sourceName = type.getQualifiedSourceName();
       lastModifiedTimes.put(sourceName, getLastModifiedTime(type));

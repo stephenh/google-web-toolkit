@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -513,14 +514,17 @@ public class GenerateJavaAST {
             // Just use JavaScriptObject's implementation for all subclasses.
             currentClass.getMethods().remove(2);
           } else {
-            tryFindUpRefs(method);
-            SourceInfo info = method.getSourceInfo();
-            if (isScript(program) && currentClass == program.getIndexedType("Array")) {
-              // Special implementation: return this.arrayClass
-              implementMethod(method, new JFieldRef(info, new JThisRef(info,
-                  (JClassType) currentClass), program.getIndexedField("Array.arrayClass"),
-                  currentClass));
+            if (currentClass == program.getIndexedType("Array")) {
+              /*
+              * Don't implement, fall through to Object.getClass(). Array emulation code
+              * in com.google.gwt.lang.Array invokes Array.getClass() and expects to get the
+              * class literal for the actual runtime type of the array (e.g. Foo[].class) and
+              * not Array.class.
+              */
+              currentClass.getMethods().remove(2);
             } else {
+              tryFindUpRefs(method);
+              SourceInfo info = method.getSourceInfo();
               implementMethod(method, new JClassLiteral(info.makeChild(), currentClass));
             }
           }
@@ -2055,7 +2059,7 @@ public class GenerateJavaAST {
       JMethod bridgeMethod =
           program.createMethod(info, String.valueOf(jdtBridgeMethod.selector), clazz,
               (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false, false, implmeth
-                  .isFinal(), false, false);
+                  .isFinal(), implmeth.getAccess(), false);
       bridgeMethod.setSynthetic();
       int paramIdx = 0;
       List<JParameter> implParams = implmeth.getParams();
@@ -2742,7 +2746,7 @@ public class GenerateJavaAST {
         JDeclarationStatement declStmt = new JDeclarationStatement(methodInfo, mapRef, call);
         JMethod clinit =
             program.createMethod(methodInfo, "$clinit", mapClass, program.getTypeVoid(), false,
-                true, true, true, false);
+                true, true, AccessModifier.PRIVATE, false);
         clinit.freezeParamTypes();
         methodInfo.addCorrelation(methodInfo.getCorrelator().by(clinit));
         JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();

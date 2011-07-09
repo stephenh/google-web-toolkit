@@ -21,10 +21,10 @@ import com.google.gwt.core.client.JavaScriptExceptionTest;
 import com.google.gwt.core.client.JsArrayMixedTest;
 import com.google.gwt.core.client.JsArrayTest;
 import com.google.gwt.core.client.SchedulerTest;
+import com.google.gwt.core.client.ScriptInjectorTest;
 import com.google.gwt.core.client.impl.AsyncFragmentLoaderTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorTest;
-import com.google.gwt.core.client.impl.XhrLoadingStrategyTest;
 import com.google.gwt.core.client.prefetch.RunAsyncCodeTest;
 import com.google.gwt.dev.StrictModeTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -47,9 +47,9 @@ public class CoreSuite {
     suite.addTestSuite(JsArrayMixedTest.class);
     suite.addTestSuite(SchedulerImplTest.class);
     suite.addTestSuite(SchedulerTest.class);
+    suite.addTestSuite(ScriptInjectorTest.class);
     suite.addTestSuite(StackTraceCreatorTest.class);
     suite.addTestSuite(StrictModeTest.class);
-    suite.addTestSuite(XhrLoadingStrategyTest.class);
     suite.addTestSuite(RunAsyncCodeTest.class);
     // $JUnit-END$
 
