@@ -565,7 +565,7 @@ public class JribbleAstBuilder {
       } else if (expr instanceof InstanceOf) {
         return instanceOf((InstanceOf) expr, local);
       } else if (expr instanceof ClassOf) {
-        return new JClassLiteral(UNKNOWN, mapper.getType(((ClassOf) expr).ref()));
+        return new JClassLiteral(UNKNOWN, mapper.getType(((ClassOf) expr).typ()));
       } else if (expr instanceof ArrayInitializer) {
         return arrayInitializer((ArrayInitializer) expr, local);
       } else if (expr instanceof UnaryOp) {
