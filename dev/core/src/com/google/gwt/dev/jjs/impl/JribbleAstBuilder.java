@@ -42,6 +42,7 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
@@ -329,10 +330,9 @@ public class JribbleAstBuilder {
     boolean isAbstract = jrMethod.modifs().contains("abstract") || jrType instanceof InterfaceDef;
     boolean isStatic = jrMethod.modifs().contains("static");
     boolean isFinal = jrMethod.modifs().contains("final");
-    boolean isPrivate = jrMethod.modifs().contains("private");
     JMethod method =
         new JMethod(UNKNOWN, jrMethod.name(), gwtType, mapper.getType(jrMethod.returnType()),
-            isAbstract, isStatic, isFinal, isPrivate);
+            isAbstract, isStatic, isFinal, access(jrMethod.modifs()));
     for (ParamDef param : jrMethod.jparams()) {
       // param modifs?
       method.addParam(new JParameter(UNKNOWN, param.name(), mapper.getType(param.typ()), false,
@@ -980,8 +980,9 @@ public class JribbleAstBuilder {
   private static JMethod createSyntheticMethod(SourceInfo info, String name,
       JDeclaredType enclosingType, JType returnType, boolean isAbstract, boolean isStatic,
       boolean isFinal, boolean isPrivate) {
+    AccessModifier access = isPrivate ? AccessModifier.PRIVATE : AccessModifier.PUBLIC;
     JMethod method =
-        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, isPrivate);
+        new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, access);
     method.freezeParamTypes();
     method.setSynthetic();
     method.setBody(new JMethodBody(info));
@@ -1039,6 +1040,15 @@ public class JribbleAstBuilder {
       sourceNames.add(intern(BinaryName.toSourceName(binaryName)));
     }
     return sourceNames;
+  }
+
+  private static AccessModifier access(scala.collection.immutable.Set<String> modifs) {
+    for (AccessModifier access : AccessModifier.values()) {
+      if (modifs.contains(access.name().toLowerCase())) {
+        return access;
+      }
+    }
+    return AccessModifier.DEFAULT;
   }
 
 }

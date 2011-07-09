@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
+import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNullType;
@@ -238,9 +239,10 @@ public class JribbleReferenceMapper {
       newExternal =
           new JConstructor(SourceOrigin.UNKNOWN, (JClassType) getType(signature.on().javaName()));
     } else {
+      // assume public is okay for the AccessModifier, will be fixed by UnifyAst
       newExternal =
           new JMethod(SourceOrigin.UNKNOWN, signature.name(), (JDeclaredType) getType(signature
-              .on().javaName()), getType(signature.returnType()), false, isStatic, false, false);
+              .on().javaName()), getType(signature.returnType()), false, isStatic, false, AccessModifier.PUBLIC);
     }
     int i = 0;
     for (Type type : signature.jparamTypes()) {
