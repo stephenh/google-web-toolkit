@@ -202,22 +202,22 @@ public class JribbleAstBuilder {
     // todo: handle multiple DeclaredTypes within a single CompilationUnit?
     newTypes = new ArrayList<JDeclaredType>();
     methodArgNames = new MethodArgNamesLookup();
-
-    // Create the new source type
-    createType(declaredType);
-    // Resolve super type / interface relationships.
-    resolveTypeRefs(declaredType);
-    // Create methods, cstrs, and fields as non-external
-    createMembers(declaredType);
-    // Fill in the methods
-    buildTheCode(declaredType);
-
-    // Clean up.
-    Result result = new Result(newTypes, binaryNamesToSourceNames(mapper.getTouchedTypes()), methodArgNames);
-    mapper.clearSource();
-    methodArgNames = null;
-    newTypes = null;
-    return result;
+    try {
+      // Create the new source type
+      createType(declaredType);
+      // Resolve super type / interface relationships.
+      resolveTypeRefs(declaredType);
+      // Create methods, cstrs, and fields as non-external
+      createMembers(declaredType);
+      // Fill in the methods
+      buildTheCode(declaredType);
+      return new Result(newTypes, binaryNamesToSourceNames(mapper.getTouchedTypes()), methodArgNames);
+    } finally {
+      // Clean up.
+      mapper.clearSource();
+      methodArgNames = null;
+      newTypes = null;
+    }
   }
 
   /** Creates a non-external type AST and puts it in the mapper. */
