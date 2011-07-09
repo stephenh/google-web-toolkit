@@ -11,8 +11,9 @@ import scala.Either;
 
 public class JribbleParser {
 
+  private static final DefParser parser = new DefParserForJava();
+
   public static DeclaredType parse(TreeLogger logger, String typeName, String source) {
-    DefParser parser = new DefParserForJava();
     Either<DeclaredType, String> result = parser.parse(new StringReader(source), "not used");
     if (result.isRight()) {
       throw new RuntimeException(String.format(
