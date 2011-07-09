@@ -368,9 +368,9 @@ public class CompilationStateBuilder {
           compiler.addCompiledClass(cc);
           buildQueue.add(cub);
         } catch (Exception e) {
-          System.out.println(e.getMessage());
+          System.out.println("ERROR: " + e.getMessage());
         } catch (AssertionError ae) {
-          System.out.println(ae.getMessage());
+          System.out.println("ERROR: " + ae.getMessage());
         }
       }
     }
