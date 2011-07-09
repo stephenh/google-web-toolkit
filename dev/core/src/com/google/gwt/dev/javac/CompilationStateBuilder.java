@@ -28,6 +28,7 @@ import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -35,7 +36,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
 import com.google.jribble.ast.DeclaredType;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
@@ -44,6 +44,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -493,19 +494,18 @@ public class CompilationStateBuilder {
   }
 
   private static byte[] readBytes(CompilationUnitBuilder cub) {
-    InputStream in = null;
     String classFile = cub.getTypeName().replace('.', '/') + ".class";
     try {
-      in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classFile);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(classFile);
       if (in != null) {
-        return IOUtils.toByteArray(in);
+        Util.copy(in, out); // does close
+        return out.toByteArray();
       } else {
         throw new RuntimeException("Class file not found: " + classFile);
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
-    } finally {
-      IOUtils.closeQuietly(in);
     }
   }
 
