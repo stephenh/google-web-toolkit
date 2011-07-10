@@ -944,9 +944,10 @@ public class JribbleAstBuilder {
     }
 
     private JDeclarationStatement varDef(VarDef def, LocalStack localStack) {
+      // TODO: modifs for isFinal
+      boolean isFinal = false;
       JLocal local =
-          new JLocal(UNKNOWN, def.name(), mapper.getType(def.typ()), false, localStack
-              .getEnclosingBody());
+          JProgram.createLocal(UNKNOWN, def.name(), mapper.getType(def.typ()), isFinal, localStack.enclosingBody);
       localStack.addVar(def.name(), local);
       JLocalRef ref = new JLocalRef(UNKNOWN, local);
       JExpression expr = null;
