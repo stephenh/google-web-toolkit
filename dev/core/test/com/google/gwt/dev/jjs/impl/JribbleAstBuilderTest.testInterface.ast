@@ -2,7 +2,7 @@ interface SpecialList extends List {
   private static final void $clinit(){
   }
 
-  public abstract String zaz(Integer x);
+  abstract String zaz(Integer x);
 
 
 }

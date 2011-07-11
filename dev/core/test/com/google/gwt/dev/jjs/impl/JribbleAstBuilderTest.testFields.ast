@@ -20,7 +20,7 @@ class Bar extends Object {
     return Bar.class;
   }
 
-  public void zaz(Bar other){
+  void zaz(Bar other){
     this.f1 = "f11";
     other.f2 = "f22";
     Bar.f3 = "f33";

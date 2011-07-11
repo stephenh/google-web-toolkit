@@ -10,7 +10,7 @@ class Bar extends Object {
     return Bar.class;
   }
 
-  public void zaz(){
+  void zaz(){
     String[][] aa = new String[][][1][1];
     aa[0][0] = "s";
     String[] a = new String[] {"1", "2"};

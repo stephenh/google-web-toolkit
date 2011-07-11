@@ -10,7 +10,7 @@ class Bar extends Object {
     return Bar.class;
   }
 
-  public void zaz(){
+  void zaz(){
     List l = new ArrayList(1);
     l.add(1);
   }

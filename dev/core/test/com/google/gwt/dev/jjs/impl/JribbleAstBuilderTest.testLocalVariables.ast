@@ -10,7 +10,7 @@ class Bar extends Object {
     return Bar.class;
   }
 
-  public void zaz(){
+  void zaz(){
     int i;
     i = 10;
     String s;

@@ -10,7 +10,7 @@ class Bar extends Object {
     return Bar.class;
   }
 
-  public void zaz(){
+  void zaz(){
     return;
   }
 
