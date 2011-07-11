@@ -162,6 +162,10 @@ public class JribbleAstBuilderTest extends TestCase {
 
     JDeclaredType fooType = process(foo);
     assertEquals(fooType, "testTryCatchFinally");
+    JMethodBody body = (JMethodBody) fooType.getMethods().get(3).getBody();
+    Assert.assertEquals("zaz", body.getMethod().getName());
+    // ensure both "int i" and "Exception e" are locals
+    Assert.assertEquals(2, body.getLocals().size());
   }
 
   public void testNewCall() throws Exception {

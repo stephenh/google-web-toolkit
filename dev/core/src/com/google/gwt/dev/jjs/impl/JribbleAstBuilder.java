@@ -884,9 +884,7 @@ public class JribbleAstBuilder {
       // introduce block context for catch variables so they can be discarded properly
       localStack.pushBlock();
       for (Tuple3<Ref, String, Block> x : statement.jcatches()) {
-        JLocal local =
-            new JLocal(UNKNOWN, x._2(), mapper.getType(x._1()), false, localStack
-                .getEnclosingBody());
+        JLocal local = JProgram.createLocal(UNKNOWN, x._2(), mapper.getType(x._1()), false, localStack.getEnclosingBody());
         localStack.addVar(x._2(), local);
         JLocalRef ref = new JLocalRef(UNKNOWN, local);
         JBlock catchBlock = new JBlock(UNKNOWN);
