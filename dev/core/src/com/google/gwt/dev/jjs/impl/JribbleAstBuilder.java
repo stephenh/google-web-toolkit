@@ -466,7 +466,12 @@ public class JribbleAstBuilder {
           constructor(i, def, clazz);
         }
         for (MethodDef i : def.jmethodDefs()) {
-          methodDef(i, clazz, def);
+          try {
+            methodDef(i, clazz, def);
+          } catch (Exception e) {
+            String msg = "ERROR: %1s has a problematic method %2s, we are skipping it and printing exception below. \n %3s";
+            System.out.println(String.format(msg, clazz.getName(), i.name(), e.toString()));
+          }
         }
         for (FieldDef i : def.jfieldDefs()) {
           fieldDef(i, def, clazz);
