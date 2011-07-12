@@ -162,4 +162,19 @@ public class Shared {
     path = path.substring(0, path.lastIndexOf('.'));
     return path.replace('/', '.');
   }
+
+  public static boolean endsWith(char[] fileName, String extension) {
+    int i = fileName.length - 1;
+    int j = extension.length() - 1;
+    if (i < j) {
+      return false;
+    }
+    for (; j >= 0; j--, i--) {
+      if (fileName[i] != extension.charAt(j)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
