@@ -25,6 +25,8 @@ import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.util.Name.BinaryName;
+import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.IOException;
@@ -776,9 +778,7 @@ public class JProgram extends JNode {
   }
 
   public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
-    String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
-
-    return typeNameMap.get(srcTypeName);
+    return typeNameMap.get(SourceOrBinaryName.toSourceName(qualifiedBinaryOrSourceName));
   }
 
   public JField getIndexedField(String string) {
@@ -1026,9 +1026,7 @@ public class JProgram extends JNode {
   }
 
   public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
-    // Make it into a source type name.
-    String srcTypeName = qualifiedBinaryName.replace('$', '.');
-    typeNameMap.put(srcTypeName, type);
+    typeNameMap.put(BinaryName.toSourceName(qualifiedBinaryName), type);
   }
 
   public void putStaticImpl(JMethod method, JMethod staticImpl) {

@@ -306,7 +306,7 @@ public class ResolveGenericsTest extends AsmTestCase {
     Method reflectionMethod = reflectionMethods.get(method);
     String desc = Type.getMethodDescriptor(reflectionMethod);
     CollectMethodData methodData = new CollectMethodData(ClassType.TopLevel,
-        access, method.getName(), desc, signature, null);
+        access, method.getName(), desc, signature, null, false);
     Class<?>[] paramTypes = reflectionMethod.getParameterTypes();
     int n = paramTypes.length;
     Type[] argTypes = new Type[n];

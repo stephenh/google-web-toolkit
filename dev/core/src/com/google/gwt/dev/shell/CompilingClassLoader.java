@@ -443,8 +443,7 @@ public final class CompilingClassLoader extends ClassLoader implements
         return createDescriptor(declaringClasses.iterator().next());
       }
       // Must check for assignability.
-      String sourceName = desc.replace('/', '.');
-      sourceName = sourceName.replace('$', '.');
+      String sourceName = InternalName.toSourceName(desc);
       JClassType declaredType = typeOracle.findType(sourceName);
 
       // Check if I declare this directly.
