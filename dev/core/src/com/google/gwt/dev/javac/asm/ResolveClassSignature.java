@@ -72,7 +72,8 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
         // The generic signature contains a superclass for interfaces,
         // but TypeOracle doesn't like that -- verify that we were
         // told Object is the superclass and ignore it.
-        assert superClass[0].equals(resolver.getTypeOracle().getJavaLangObject());
+        // ...except Scala interfaces can have super classes, see GenTraversableFactory
+        // assert superClass[0].equals(resolver.getTypeOracle().getJavaLangObject());
       } else {
         resolver.setSuperClass(type, (JClassType) superClass[0]);
       }
