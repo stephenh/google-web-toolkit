@@ -943,7 +943,8 @@ public class TypeOracleMediator extends TypeOracleBuilder {
           return false;
         }
         if (enclosingType.isGenericType() != null
-            && (classData.getAccess() & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) != 0) {
+            && (classData.getAccess() & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) != 0
+            && !classData.getSource().endsWith(".scala")) {
           // If the inner class doesn't have access to it's enclosing type's
           // type variables, the enclosign type must be the raw type instead
           // of the generic type.
