@@ -377,8 +377,9 @@ public class CollectClassData extends EmptyVisitor {
       // skip synthetic methods
       return null;
     }
+    boolean isJribble = source.endsWith(".scala");
     CollectMethodData mv = new CollectMethodData(classType, access, name, desc,
-        signature, exceptions);
+        signature, exceptions, isJribble);
     methods.add(mv);
     return mv;
   }
