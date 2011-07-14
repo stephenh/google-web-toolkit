@@ -124,11 +124,21 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         String internalName, String sourceFileResourceName, byte[] classBytes,
         long lastModifiedTime) {
       this.packageName = packageName;
-      this.sourceName = sourceName;
       this.internalName = internalName;
       this.sourceFileResourceName = sourceFileResourceName;
       this.byteCode = classBytes;
       this.lastModifiedTime = lastModifiedTime;
+      if (sourceName.contains("$")) {
+        // sanity check
+        CollectClassData cd = this.getCollectClassData();
+        if (cd.getInnerClass() != null) {
+          this.sourceName = cd.getOuterClass().replace('/', '.') + "." + cd.getInnerClass();
+        } else {
+          this.sourceName = sourceName;
+        }
+      } else {
+        this.sourceName = sourceName;
+      }
     }
     
     /**

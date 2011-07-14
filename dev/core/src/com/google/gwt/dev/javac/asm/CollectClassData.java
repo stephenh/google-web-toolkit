@@ -154,6 +154,7 @@ public class CollectClassData extends EmptyVisitor {
   private String outerClass;
   private String outerMethodName;
   private String outerMethodDesc;
+  private String innerClass;
   private CollectClassData.ClassType classType = ClassType.TopLevel;
 
   /**
@@ -216,6 +217,13 @@ public class CollectClassData extends EmptyVisitor {
    */
   public String getOuterClass() {
     return outerClass;
+  }
+
+  /**
+   * @return the innerClass
+   */
+  public String getInnerClass() {
+    return innerClass;
   }
 
   /**
@@ -345,6 +353,7 @@ public class CollectClassData extends EmptyVisitor {
     if (this.name.equals(name)) {
       if (outerName != null) {
         outerClass = outerName;
+        innerClass = innerName;
       }
       // TODO(jat): should we only pull in a subset of these flags? Use only
       // these flags, or what? For now, just grab ACC_STATIC and ACC_PRIVATE
