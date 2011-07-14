@@ -364,16 +364,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    *
    * @param logger logger to use
    * @param typeDataList collection of data need to build types
-   */
-  public void addNewTypes(TreeLogger logger, Collection<TypeData> typeDataList) {
-    addNewTypes(logger, typeDataList, new MethodArgNamesLookup());
-  }
-
-  /**
-   * Adds new units to an existing TypeOracle.
-   *
-   * @param logger logger to use
-   * @param typeDataList collection of data need to build types
    * @param argsLookup Allows the caller to pass the method argument names which
    *          are not normally available in bytecode.
    */

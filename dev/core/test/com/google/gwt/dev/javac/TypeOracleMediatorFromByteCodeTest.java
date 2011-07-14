@@ -51,7 +51,7 @@ public class TypeOracleMediatorFromByteCodeTest extends
       }
     }
     TypeOracleMediator mediator = new TypeOracleMediator();
-    mediator.addNewTypes(createTreeLogger(), typeDataList);
+    mediator.addNewTypes(createTreeLogger(), typeDataList, new MethodArgNamesLookup());
     typeOracle = mediator.getTypeOracle();
     checkTypes(typeOracle.getTypes());
   }
