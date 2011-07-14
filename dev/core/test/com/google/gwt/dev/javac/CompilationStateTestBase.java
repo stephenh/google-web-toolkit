@@ -102,7 +102,7 @@ public abstract class CompilationStateTestBase extends TestCase {
       JavaResourceBase.getStandardResources());
 
   protected CompilationState state = isolatedBuilder.doBuildFrom(
-      createTreeLogger(), oracle.getResources(), false);
+      createTreeLogger(), oracle.getResources(), null, false);
 
   protected void addGeneratedUnits(MockResource... sourceFiles) {
     state.addGeneratedCompilationUnits(createTreeLogger(),
@@ -111,7 +111,7 @@ public abstract class CompilationStateTestBase extends TestCase {
 
   protected void rebuildCompilationState() {
     state = isolatedBuilder.doBuildFrom(createTreeLogger(),
-        oracle.getResources(), false);
+        oracle.getResources(), null, false);
   }
 
   protected void validateCompilationState(String... generatedTypeNames) {

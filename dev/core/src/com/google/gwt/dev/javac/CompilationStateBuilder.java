@@ -357,11 +357,6 @@ public class CompilationStateBuilder {
   }
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate) {
-    return buildFrom(logger, resources, delegate, false);
-  }
-
-  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
       AdditionalTypeProviderDelegate delegate, boolean suppressErrors) {
     Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
@@ -440,11 +435,6 @@ public class CompilationStateBuilder {
         compileMoreLater.compile(logger, builders, cachedUnits,
             CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE, suppressErrors);
     return new CompilationState(logger, resultUnits, compileMoreLater);
-  }
-
-  public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
-      boolean suppressErrors) {
-    return doBuildFrom(logger, resources, null, suppressErrors);
   }
 
   /**

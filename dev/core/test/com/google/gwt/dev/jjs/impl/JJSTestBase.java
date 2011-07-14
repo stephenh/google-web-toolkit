@@ -239,7 +239,7 @@ public abstract class JJSTestBase extends TestCase {
     try {
       GwtAstBuilder.ENABLED = true;
       CompilationState state = CompilationStateBuilder.buildFrom(logger,
-          sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
+          sourceOracle.getResources(), getAdditionalTypeProviderDelegate(), false);
       JProgram program = JavaAstConstructor.construct(logger, state,
           "test.EntryPoint", "com.google.gwt.lang.Exceptions");
       return program;
