@@ -159,50 +159,6 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     });
   }
 
-  /**
-   * Convenience method to sort constructors in a consistent way. Note that the
-   * order is subject to change and is intended to generate an "aesthetically
-   * pleasing" order rather than a computationally reliable order.
-   */
-  public static void sort(JConstructor[] ctors) {
-    Arrays.sort(ctors, new Comparator<JConstructor>() {
-      public int compare(JConstructor o1, JConstructor o2) {
-        // Nothing for now; could enhance to sort based on parameter list
-        return 0;
-      }
-    });
-  }
-
-  /**
-   * Convenience method to sort fields in a consistent way. Note that the order
-   * is subject to change and is intended to generate an "aesthetically
-   * pleasing" order rather than a computationally reliable order.
-   */
-  public static void sort(JField[] fields) {
-    Arrays.sort(fields, new Comparator<JField>() {
-      public int compare(JField f1, JField f2) {
-        String name1 = f1.getName();
-        String name2 = f2.getName();
-        return name1.compareTo(name2);
-      }
-    });
-  }
-
-  /**
-   * Convenience method to sort methods in a consistent way. Note that the order
-   * is subject to change and is intended to generate an "aesthetically
-   * pleasing" order rather than a computationally reliable order.
-   */
-  public static void sort(JMethod[] methods) {
-    Arrays.sort(methods, new Comparator<JMethod>() {
-      public int compare(JMethod m1, JMethod m2) {
-        String name1 = m1.getName();
-        String name2 = m2.getName();
-        return name1.compareTo(name2);
-      }
-    });
-  }
-
   static String[] modifierBitsToNamesForField(int bits) {
     List<String> strings = modifierBitsToNamesForMethodsAndFields(bits);
 
