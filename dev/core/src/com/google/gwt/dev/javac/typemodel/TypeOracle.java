@@ -639,7 +639,8 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   void addNewType(JRealClassType newType) {
     String fqcn = newType.getQualifiedSourceName();
-    allTypes.put(fqcn, newType);
+    JRealClassType existing = allTypes.put(fqcn, newType);
+    assert existing == null;
     recentTypes.add(newType);
   }
 
