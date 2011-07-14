@@ -24,7 +24,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.javac.JavaSourceParser;
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
@@ -686,13 +685,6 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     String fqcn = newType.getQualifiedSourceName();
     allTypes.put(fqcn, newType);
     recentTypes.add(newType);
-  }
-
-  /**
-   * Called to add a source reference for a top-level class type.
-   */
-  void addSourceReference(JRealClassType type, Resource sourceFile) {
-    javaSourceParser.addSourceForType(type, sourceFile);
   }
 
   /**
