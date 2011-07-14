@@ -263,4 +263,12 @@ public final class Class<T> {
   Class<? super T> getEnumSuperclass() {
     return enumSuperclass;
   }
+
+  public Class<?>[] getInterfaces() {
+    throw new RuntimeException("not supported");
+  }
+  
+  public boolean isAssignableFrom(Class<?> cls) {
+    throw new RuntimeException("not supported");
+  }
 }
