@@ -896,6 +896,9 @@ public class UnifyAst {
     for (JField field : type.getFields()) {
       String sig = type.getName() + '.' + field.getSignature();
       fieldMap.put(sig, field);
+      // jribble fields don't have types in their signature
+      int colon = sig.indexOf(':');
+      fieldMap.put(sig.substring(0, colon + 1) + "V", field);
     }
     for (JMethod method : type.getMethods()) {
       String sig = type.getName() + '.' + method.getSignature();

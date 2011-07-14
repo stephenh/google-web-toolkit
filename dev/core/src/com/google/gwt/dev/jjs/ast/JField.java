@@ -180,7 +180,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     if (this == originalField) {
       return true;
     }
-    return originalField.isExternal() && originalField.getSignature().equals(this.getSignature())
+    return originalField.isExternal() && originalField.getName().equals(this.getName())
         && this.getEnclosingType().replaces(originalField.getEnclosingType());
   }
 }
