@@ -581,33 +581,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     }
   }
   
-  @SuppressWarnings("unused")
-  private Class<?> getClassLiteralForPrimitive(Type type) {
-    switch (type.getSort()) {
-      case Type.BOOLEAN:
-        return Boolean.TYPE;
-      case Type.BYTE:
-        return Byte.TYPE;
-      case Type.CHAR:
-        return Character.TYPE;
-      case Type.SHORT:
-        return Short.TYPE;
-      case Type.INT:
-        return Integer.TYPE;
-      case Type.LONG:
-        return Long.TYPE;
-      case Type.FLOAT:
-        return Float.TYPE;
-      case Type.DOUBLE:
-        return Double.TYPE;
-      case Type.VOID:
-        return Void.TYPE;
-      default:
-        assert false : "Unexpected primitive type " + type;
-        return null;
-    }
-  }
-  
   /**
    * Map a bitset onto a different bitset.
    *
