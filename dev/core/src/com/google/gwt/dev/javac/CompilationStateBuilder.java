@@ -371,10 +371,6 @@ public class CompilationStateBuilder {
     }
   }
 
-  public static CompilationStateBuilder get() {
-    return instance;
-  }
-
   /**
    * Called to setup the directory where the persistent {@link CompilationUnit}
    * cache should be stored. Only the first call to init() will have an effect.
