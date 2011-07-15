@@ -622,7 +622,10 @@ public class JribbleAstBuilder {
     }
 
     private JNewArray newArray(NewArray expr, LocalStack local) {
-      JArrayType typ = new JArrayType(mapper.getType(expr.typ()));
+      JType type = mapper.getType(expr.typ()); // this is the element type
+      for (int i = 0; i < expr.jdims().size(); i++) {
+        type = new JArrayType(type);
+      }
       List<JExpression> dims = new LinkedList<JExpression>();
       for (Option<Expression> i : expr.jdims()) {
         if (i.isDefined()) {
@@ -631,7 +634,7 @@ public class JribbleAstBuilder {
           dims.add(JAbsentArrayDimension.INSTANCE);
         }
       }
-      return JNewArray.createDims(UNKNOWN, typ, dims);
+      return JNewArray.createDims(UNKNOWN, (JArrayType) type, dims);
     }
 
     private JArrayRef arrayRef(ArrayRef expr, LocalStack local) {

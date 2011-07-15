@@ -4,11 +4,13 @@ import static com.google.gwt.dev.jjs.impl.AstUtils.toRef;
 
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.util.AbstractTextOutput;
@@ -290,7 +292,7 @@ public class JribbleAstBuilderTest extends TestCase {
     Type stringAA = new Array(new Array(string));
 
     Statement s1 =
-        new VarDef(stringAA, "aa", new Some<Expression>(new NewArray(stringA, list(
+        new VarDef(stringAA, "aa", new Some<Expression>(new NewArray(string, list(
             (Option<Expression>) new Some<Expression>(new IntLiteral(1)), new Some<Expression>(
                 new IntLiteral(1))))));
     Statement s2 =
@@ -306,8 +308,17 @@ public class JribbleAstBuilderTest extends TestCase {
     zaz.stmts = list(s1, s2, s3, s4);
     foo.classBody = list(foo.defaultCstr, zaz.build());
 
-    JDeclaredType fooType = process(foo);
+    JClassType fooType = (JClassType) process(foo);
     assertEquals(fooType, "testArrays");
+    JMethod zazMethod = fooType.getMethods().get(3);
+    // String[][]
+    JDeclarationStatement decl1 = (JDeclarationStatement) ((JMethodBody) zazMethod.getBody()).getStatements().get(0);
+    Assert.assertEquals(2, ((JNewArray) decl1.getInitializer()).dims.size());
+    Assert.assertEquals(2, ((JNewArray) decl1.getInitializer()).getArrayType().getDims());
+    // String[]
+    JDeclarationStatement decl2 = (JDeclarationStatement) ((JMethodBody) zazMethod.getBody()).getStatements().get(2);
+    Assert.assertEquals(null, ((JNewArray) decl2.getInitializer()).dims);
+    Assert.assertEquals(1, ((JNewArray) decl2.getInitializer()).getArrayType().getDims());
   }
 
   public void testInterfacesTreatedAsClasses() throws Exception {
