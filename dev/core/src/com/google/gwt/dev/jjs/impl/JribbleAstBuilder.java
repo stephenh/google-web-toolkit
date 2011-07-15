@@ -677,7 +677,10 @@ public class JribbleAstBuilder {
         jop = JBinaryOperator.SUB;
         type = JPrimitiveType.INT;
       } else if (op instanceof Plus) {
-        if (lhs.getType() == javaLangString.getNonNull() || rhs.getType() == javaLangString.getNonNull()) {
+        if (lhs.getType() == javaLangString.getNonNull()
+            || lhs.getType() == javaLangString
+            || rhs.getType() == javaLangString.getNonNull()
+            || rhs.getType() == javaLangString) {
           jop = JBinaryOperator.CONCAT;
           type = javaLangString;
         } else {
