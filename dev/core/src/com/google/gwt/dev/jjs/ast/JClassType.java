@@ -100,6 +100,17 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     visitor.endVisit(this, ctx);
   }
 
+  public boolean hasSuperClass(JClassType lookingFor) {
+    JClassType current = superClass;
+    while (current != null) {
+      if (current == lookingFor) {
+        return true;
+      }
+      current = current.getSuperClass();
+    }
+    return false;
+  }
+
   @Override
   protected Object writeReplace() {
     if (isExternal()) {
