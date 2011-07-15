@@ -471,6 +471,9 @@ public class JribbleAstBuilder {
           } catch (Exception e) {
             String msg = "ERROR: %1s has a problematic method %2s, we are skipping it and printing exception below. \n %3s";
             System.out.println(String.format(msg, clazz.getName(), i.name(), e.toString()));
+          } catch (AssertionError e) {
+            String msg = "ERROR: %1s has a problematic method %2s, we are skipping it and printing exception below. \n %3s";
+            System.out.println(String.format(msg, clazz.getName(), i.name(), e.toString()));
           }
         }
         for (FieldDef i : def.jfieldDefs()) {
