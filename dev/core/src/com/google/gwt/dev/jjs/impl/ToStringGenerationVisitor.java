@@ -652,7 +652,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       } else if (thisType instanceof JClassType && ((JClassType) thisType).getSuperClass() == target.getEnclosingType()) {
         print(CHARS_SUPER);
       } else {
-        // assert false : "invalid target type " + target.getEnclosingType();
+        assert false : "invalid target type " + target.getEnclosingType();
       }
     } else {
       // Instance call.
