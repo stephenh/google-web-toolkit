@@ -66,21 +66,6 @@ public class JProgram extends JNode {
       "com.google.gwt.lang.CollapsedPropertyHolder", "com.google.gwt.lang.Exceptions",
       "com.google.gwt.lang.LongLib", "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util"));
 
-  /*
-   * Types which are not referenced by any Java code, but are required to exist
-   * after Java optimizations have run in order to be used by backend
-   * code-generation. These classes and their members, are considered live
-   * by ControlFlowAnalysis, at all times. Immortal types always live in the
-   * initial fragment and their definitions are hoisted to appear before all
-   * other types. Only static methods and fields are allowed, and no clinits
-   * are run. Field initializers must be primitives, literals, or one of
-   * JSO.createObject() or JSO.createArray().
-   *
-   * Classes are inserted into the JsAST in the order they appear in the Set.
-   */
-  public static final Set<String> IMMORTAL_CODEGEN_TYPES_SET = new LinkedHashSet<String>(Arrays.asList(
-      "com.google.gwt.lang.SeedUtil"));
-
   public static final Set<String> INDEX_TYPES_SET = new LinkedHashSet<String>(Arrays.asList(
       "java.io.Serializable", "java.lang.Object", "java.lang.String", "java.lang.Class",
       "java.lang.CharSequence", "java.lang.Cloneable", "java.lang.Comparable", "java.lang.Enum",
@@ -115,7 +100,6 @@ public class JProgram extends JNode {
       new HashMap<String, JPrimitiveType>();
 
   static {
-    CODEGEN_TYPES_SET.addAll(IMMORTAL_CODEGEN_TYPES_SET);
     INDEX_TYPES_SET.addAll(CODEGEN_TYPES_SET);
 
     /*
@@ -320,7 +304,6 @@ public class JProgram extends JNode {
   }
 
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
-  public final List<JClassType> immortalCodeGenTypes = new ArrayList<JClassType>();
 
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
@@ -332,8 +315,6 @@ public class JProgram extends JNode {
   private final HashMap<JType, JArrayType> arrayTypes = new HashMap<JType, JArrayType>();
 
   private IdentityHashMap<JReferenceType, JsCastMap> castMaps;
-
-  private Map<JType, JField> classLiteralFields;
 
   /**
    * A factory to create correlations.
@@ -412,11 +393,6 @@ public class JProgram extends JNode {
     if (CODEGEN_TYPES_SET.contains(name)) {
       codeGenTypes.add((JClassType) type);
     }
-
-    if (IMMORTAL_CODEGEN_TYPES_SET.contains(name)) {
-      immortalCodeGenTypes.add((JClassType) type);
-    }
-    
     if (INDEX_TYPES_SET.contains(name)) {
       indexedTypes.put(type.getShortName(), type);
       for (JMethod method : type.getMethods()) {
@@ -756,10 +732,6 @@ public class JProgram extends JNode {
     return castMaps.get(referenceType);
   }
 
-  public JField getClassLiteralField(JType type) {
-    return classLiteralFields.get(isJavaScriptObject(type) ? getJavaScriptObject() : type);
-  }
-
   public String getClassLiteralName(JType type) {
     return type.getJavahSignatureName() + "_classLit";
   }
@@ -1037,14 +1009,17 @@ public class JProgram extends JNode {
     }
   }
 
-  public void recordClassLiteralFields(Map<JType, JField> classLiteralFields) {
-    this.classLiteralFields = classLiteralFields;
-  }
-
   public void recordQueryIds(Map<JReferenceType, Integer> queryIdsByType,
       List<JReferenceType> typesByQueryId) {
     this.queryIdsByType = queryIdsByType;
     this.typesByQueryId = typesByQueryId;
+  }
+
+  public void removeStaticImplMapping(JMethod staticImpl) {
+    JMethod instanceMethod = staticToInstanceMap.remove(staticImpl);
+    if (instanceMethod != null) {
+      instanceToStaticMap.remove(instanceMethod);
+    }
   }
 
   public void setRunAsyncs(List<JRunAsync> runAsyncs) {
