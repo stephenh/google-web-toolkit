@@ -139,7 +139,9 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
         logger, classType);
     returnTypeRef[0] = classType;
     if (!resolveSuccess || returnTypeRef[0] == null) {
-      logger.log(TreeLogger.ERROR, "Unable to resolve class " + internalName);
+      if (!internalName.startsWith("scala/")) {
+        logger.log(TreeLogger.ERROR, "Unable to resolve class " + internalName);
+      }
       // Replace bound with Object if we can't resolve the class.
       returnTypeRef[0] = resolver.getTypeOracle().getJavaLangObject();
     }
