@@ -365,7 +365,7 @@ public class CompilationStateBuilder {
           // allValidClasses is maintained by the JDT UnitProcessorImpl, which we don't hit, so update it here
           allValidClasses.put(cc.getSourceName(), cc);
           // Add classes to the JDT compiler in case .java files refer to .scala files
-          // (Can't use addValidUnit because our CompilationUnit hasn't been built yet in the build queue yetj)
+          // (Can't use addValidUnit because our CompilationUnit hasn't been built yet in the build queue yet)
           compiler.addCompiledClass(cc);
           buildQueue.add(cub);
         } catch (Exception e) {
