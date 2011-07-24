@@ -38,6 +38,7 @@ import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOr
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Util;
@@ -1215,10 +1216,10 @@ public final class CompilingClassLoader extends ClassLoader implements
   /**
    * Convert a binary class name into a resource-like name.
    */
-  private String canonicalizeClassName(String className) {
-    String lookupClassName = className.replace('.', '/');
+  private String canonicalizeClassName(String binaryClassName) {
+    String lookupClassName = BinaryName.toInternalName(binaryClassName);
     // A JSO impl class ends with $, strip it
-    if (classRewriter != null && classRewriter.isJsoImpl(className)) {
+    if (classRewriter != null && classRewriter.isJsoImpl(binaryClassName)) {
       lookupClassName = lookupClassName.substring(0,
           lookupClassName.length() - 1);
     }
