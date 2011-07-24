@@ -21,6 +21,7 @@ import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.StringInterner;
 
 import java.util.ArrayList;
@@ -206,21 +207,33 @@ public class CollectClassData extends EmptyVisitor {
   }
 
   /**
-   * @return the name
+   * @return the internal name
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return the outerClass
+   * @return the simple name
+   */
+  public String getSimpleName() {
+    if (innerClass != null) {
+      return innerClass;
+    } else {
+      // this is a top-level class, so the simple name is the class name
+      return InternalName.getClassName(name);
+    }
+  }
+
+  /**
+   * @return the internal outerClass name (or null if not an inner class)
    */
   public String getOuterClass() {
     return outerClass;
   }
 
   /**
-   * @return the innerClass
+   * @return the simple innerClass name (or null if not an inner class)
    */
   public String getInnerClass() {
     return innerClass;

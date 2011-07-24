@@ -49,7 +49,6 @@ import com.google.gwt.dev.javac.typemodel.JWildcardType;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.javac.typemodel.TypeOracleBuilder;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -523,7 +522,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     assert !collectClassData.hasNoExternalName();
     String enclosingTypeName = null;
     if (enclosingClassData != null) {
-      enclosingTypeName = InternalName.toSourceName(InternalName.getClassName(enclosingClassData.getName()));
+      enclosingTypeName = enclosingClassData.getSimpleName();
     }
     if ((access & Opcodes.ACC_ANNOTATION) != 0) {
       resultType = newAnnotationType(pkg, enclosingTypeName, className);
