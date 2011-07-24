@@ -628,7 +628,7 @@ public class JdtCompiler {
 
       private void addReference(ReferenceBinding referencedType) {
         String binaryName = CharOperation.toString(referencedType.compoundName);
-        apiRefs.add(BinaryName.toSourceName(binaryName));
+        apiRefs.add(BinaryName.toInternalName(binaryName));
       }
 
       /**

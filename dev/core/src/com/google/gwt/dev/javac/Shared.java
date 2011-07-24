@@ -157,6 +157,9 @@ public class Shared {
     return qualifiedTypeName.replace('.', '/') + ".java";
   }
 
+  /**
+   * @return the binary name for {@code path}, e.g. {@code foo.Foo$Bar} for {@code foo/Foo$Bar.java}
+   */
   public static String toTypeName(String path) {
     assert (path.endsWith(".java") || path.endsWith(".jribble"));
     path = path.substring(0, path.lastIndexOf('.'));

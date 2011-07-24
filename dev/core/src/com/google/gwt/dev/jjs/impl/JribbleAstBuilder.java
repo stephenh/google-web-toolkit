@@ -211,7 +211,7 @@ public class JribbleAstBuilder {
       createMembers(declaredType);
       // Fill in the methods
       buildTheCode(declaredType);
-      return new Result(newTypes, binaryNamesToSourceNames(mapper.getTouchedTypes()), methodArgNames);
+      return new Result(newTypes, binaryToInternal(mapper.getTouchedTypes()), methodArgNames);
     } finally {
       // Clean up.
       mapper.clearSource();
@@ -1047,12 +1047,12 @@ public class JribbleAstBuilder {
     return stringInterner.intern(s);
   }
   
-  private static Set<String> binaryNamesToSourceNames(Set<String> binaryNames) {
-    Set<String> sourceNames = new HashSet<String>(binaryNames.size());
+  private static Set<String> binaryToInternal(Set<String> binaryNames) {
+    Set<String> internalNames = new HashSet<String>(binaryNames.size());
     for (String binaryName : binaryNames) {
-      sourceNames.add(intern(BinaryName.toSourceName(binaryName)));
+      internalNames.add(intern(BinaryName.toInternalName(binaryName)));
     }
-    return sourceNames;
+    return internalNames;
   }
 
   private static AccessModifier access(scala.collection.immutable.Set<String> modifs) {

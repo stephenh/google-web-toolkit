@@ -58,13 +58,13 @@ class Dependencies implements Serializable {
     }
   }
 
-  /** Infers qualified and simple refs from {@code apiRefs}.
+  /** Infers qualified and simple refs from binary name {@code apiRefs}.
    *
-   * For each apiRef, say foo.bar.Zaz, we add qualified types of "foo", "foo.bar",
+   * For each apiRef, say foo.bar.Zaz, we add qualified refs of "foo", "foo.bar",
    * and "foo.bar.Zaz". This will cause invalidation whenever someone introduces
    * a new class "foo", "foo.bar", changes/removes "foo.bar.Zaz".
    *
-   * For each apiRef in java.lang, say java.lang.String, we add a simple type of
+   * For each apiRef in java.lang, say java.lang.String, we add a simple ref of
    * "String". This means, for compilation "foo.bar.Zaz", it will be invalidated
    * if someone introduces "foo.bar.String", as the import precedence changes.
    *

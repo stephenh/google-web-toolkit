@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.impl.JribbleAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.BinaryName;
+import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -114,7 +115,8 @@ public class CompilationStateBuilder {
             unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
           }
           for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
-            unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
+            // TODO(stephenh) Kill crappy source -> internal conversion
+            unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef).replace('.', '/')));
           }
           for (String jsniDep : jsniDeps) {
             unresolvedQualified.add(interner.intern(jsniDep));
@@ -135,7 +137,7 @@ public class CompilationStateBuilder {
           }
 
           for (CompiledClass cc : compiledClasses) {
-            allValidClasses.put(cc.getSourceName(), cc);
+            allValidClasses.put(cc.getInternalName(), cc);
           }
 
           builder.setClasses(compiledClasses).setTypes(types).setDependencies(dependencies)
@@ -149,7 +151,7 @@ public class CompilationStateBuilder {
     }
 
     /**
-     * A global cache of all currently-valid class files keyed by source name.
+     * A global cache of all currently-valid class files keyed by internal name.
      * This is used to validate dependencies when reusing previously cached
      * units, to make sure they can be recompiled if necessary.
      */
@@ -196,7 +198,7 @@ public class CompilationStateBuilder {
     void addValidUnit(CompilationUnit unit) {
       compiler.addCompiledUnit(unit);
       for (CompiledClass cc : unit.getCompiledClasses()) {
-        allValidClasses.put(cc.getSourceName(), cc);
+        allValidClasses.put(cc.getInternalName(), cc);
       }
     }
 
@@ -299,7 +301,7 @@ public class CompilationStateBuilder {
         // Any units we invalidated must now be removed from the valid classes.
         for (CompilationUnit unit : invalidatedUnits) {
           for (CompiledClass cc : unit.getCompiledClasses()) {
-            allValidClasses.remove(cc.getSourceName());
+            allValidClasses.remove(cc.getInternalName());
           }
         }
       } while (builders.size() > 0);
@@ -363,7 +365,7 @@ public class CompilationStateBuilder {
           cub.setClasses(newArrayList(cc));
           cub.setJsniMethods(new ArrayList<JsniMethod>());
           // allValidClasses is maintained by the JDT UnitProcessorImpl, which we don't hit, so update it here
-          allValidClasses.put(cc.getSourceName(), cc);
+          allValidClasses.put(cc.getInternalName(), cc);
           // Add classes to the JDT compiler in case .java files refer to .scala files
           // (Can't use addValidUnit because our CompilationUnit hasn't been built yet in the build queue yet)
           compiler.addCompiledClass(cc);

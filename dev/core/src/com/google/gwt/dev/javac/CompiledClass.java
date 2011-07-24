@@ -19,7 +19,6 @@ import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.DiskCacheToken;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.Name.InternalName;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
@@ -36,7 +35,6 @@ public final class CompiledClass implements Serializable {
 
   private final CompiledClass enclosingClass;
   private final String internalName;
-  private final String sourceName;
   private final boolean isLocal;
   private transient TypeData typeData;
   private CompilationUnit unit;
@@ -64,7 +62,6 @@ public final class CompiledClass implements Serializable {
       String internalName) {
     this.enclosingClass = enclosingClass;
     this.internalName = StringInterner.get().intern(internalName);
-    this.sourceName = StringInterner.get().intern(InternalName.toSourceName(internalName));
     this.classBytesToken = new DiskCacheToken(diskCache.writeByteArray(classBytes));
     this.isLocal = isLocal;
   }
@@ -109,13 +106,14 @@ public final class CompiledClass implements Serializable {
    * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
   public String getSourceName() {
-    return sourceName;
+    return getTypeData().getSourceName();
   }
   
   public TypeData getTypeData() {
     if (typeData == null) {
+      assert unit != null : "initUnit has not been called yet";
       typeData =
-          new TypeData(getPackageName(), getSourceName(), getInternalName(), null, getBytes(),
+          new TypeData(getPackageName(), getInternalName(), null, getBytes(),
               getUnit().getLastModified());
     }
     return typeData;
