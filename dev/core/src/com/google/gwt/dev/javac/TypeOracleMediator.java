@@ -508,8 +508,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
   private JRealClassType createType(TypeData typeData,
       CollectClassData collectClassData, CollectClassData enclosingClassData) {
     int access = collectClassData.getAccess();
-    String qualifiedSourceName = typeData.sourceName;
-    String className = Shared.getShortName(qualifiedSourceName);
+    String simpleName = collectClassData.getSimpleName();
     JRealClassType resultType = null;
     String jpkgName = typeData.packageName;
     JPackage pkg = typeOracle.getOrCreatePackage(jpkgName);
@@ -520,17 +519,17 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       enclosingTypeName = enclosingClassData.getSimpleName();
     }
     if ((access & Opcodes.ACC_ANNOTATION) != 0) {
-      resultType = newAnnotationType(pkg, enclosingTypeName, className);
+      resultType = newAnnotationType(pkg, enclosingTypeName, simpleName);
     } else if ((access & Opcodes.ACC_ENUM) != 0) {
-      resultType = newEnumType(pkg, enclosingTypeName, className);
+      resultType = newEnumType(pkg, enclosingTypeName, simpleName);
     } else {
       JTypeParameter[] typeParams = getTypeParametersForClass(collectClassData);
       if ((typeParams != null && typeParams.length > 0)
           || nonStaticInsideGeneric(collectClassData, enclosingClassData)) {
         resultType = new JGenericType(typeOracle, pkg, enclosingTypeName,
-            className, isIntf, typeParams);
+            simpleName, isIntf, typeParams);
       } else {
-        resultType = newRealClassType(pkg, enclosingTypeName, className, isIntf);
+        resultType = newRealClassType(pkg, enclosingTypeName, simpleName, isIntf);
       }
     }
 
