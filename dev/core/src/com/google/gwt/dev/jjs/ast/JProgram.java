@@ -392,9 +392,9 @@ public class JProgram extends JNode {
 
   public void addType(JDeclaredType type) {
     allTypes.add(type);
-    String name = type.getName();
-    putIntoTypeMap(name, type);
+    putIntoTypeMap(type);
 
+    String name = type.getName();
     if (CODEGEN_TYPES_SET.contains(name)) {
       codeGenTypes.add((JClassType) type);
     }
@@ -450,7 +450,7 @@ public class JProgram extends JNode {
     x.setSuperClass(getTypeJavaLangEnum());
 
     allTypes.add(x);
-    putIntoTypeMap(name, x);
+    putIntoTypeMap(x);
 
     return x;
   }
@@ -1007,10 +1007,12 @@ public class JProgram extends JNode {
         restFragments);
   }
 
-  public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
-    typeNameMap.put(qualifiedBinaryName, type);
-    com.google.gwt.core.ext.typeinfo.JClassType classType = otherTypeOracle.findTypeBySourceOrBinaryName(qualifiedBinaryName);
+  public void putIntoTypeMap(JDeclaredType type) {
+    // Store by binary name
+    typeNameMap.put(type.getName(), type);
+    com.google.gwt.core.ext.typeinfo.JClassType classType = otherTypeOracle.findTypeBySourceOrBinaryName(type.getName());
     if (classType != null) {
+      // And source name
       typeNameMapBySource.put(classType.getQualifiedSourceName(), type);
     }
   }
