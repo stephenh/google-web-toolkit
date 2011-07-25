@@ -49,7 +49,6 @@ import com.google.gwt.dev.javac.typemodel.JWildcardType;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.javac.typemodel.TypeOracleBuilder;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -115,11 +114,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
      */
     private final String sourceFileResourceName;
 
-    /**
-     * See {@link JType#getQualifiedSourceName()}.
-     */
-    private final String sourceName;
-
     protected TypeData(String packageName,
         String internalName, String sourceFileResourceName, byte[] classBytes,
         long lastModifiedTime) {
@@ -128,7 +122,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       this.sourceFileResourceName = sourceFileResourceName;
       this.byteCode = classBytes;
       this.lastModifiedTime = lastModifiedTime;
-      this.sourceName = StringInterner.get().intern(getCollectClassData().getSourceName());
     }
 
     /**
@@ -147,10 +140,6 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         reader.accept(cv, 0);
       }
       return classData;
-    }
-
-    public String getSourceName() {
-      return sourceName;
     }
   }
 

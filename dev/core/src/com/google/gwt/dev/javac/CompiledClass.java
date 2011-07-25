@@ -16,8 +16,10 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
+import com.google.gwt.dev.javac.asm.CollectClassData;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.DiskCacheToken;
+import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.StringInterner;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -25,6 +27,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Encapsulates the state of a single compiled class file.
@@ -103,12 +106,30 @@ public final class CompiledClass implements Serializable {
   }
 
   /**
-   * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
+   * Accurately derives the source name from our internal name, using
+   * {@code classFileMap} to recursively resolve outer class names.
+   *
+   * @return the fully qualified source name
    */
-  public String getSourceName() {
-    return getTypeData().getSourceName();
+  public String getSourceName(Map<String, CompiledClass> classFileMap) {
+    CollectClassData cd = getTypeData().getCollectClassData();
+    if (cd.getInnerClass() == null) {
+      // This manual internal -> source replace is safe because any "$"
+      // characters have been split up by ASM building the CollectClassDatas
+      return cd.getName().replace('/', '.');
+    } else {
+      CompiledClass outer = classFileMap.get(cd.getOuterClass());
+      // TODO(stephenh) Uncomment assertion when RedBlack is fixed
+      // assert outer != null : "outer class not found for " + cd.getInnerClass();
+      if (outer == null) {
+        // TODO(stephenh) Remove this when RedBlack is fixed
+        return InternalName.toSourceName(cd.getOuterClass());
+      }
+      // recurse for nested inner types, e.g. foo.Bar.Zaz.Zip
+      return outer.getSourceName(classFileMap) + "." + cd.getInnerClass();
+    }
   }
-  
+
   public TypeData getTypeData() {
     if (typeData == null) {
       assert unit != null : "initUnit has not been called yet";

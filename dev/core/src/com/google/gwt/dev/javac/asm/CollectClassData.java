@@ -226,21 +226,6 @@ public class CollectClassData extends EmptyVisitor {
   }
 
   /**
-   * @return the fully qualified source name
-   */
-  public String getSourceName() {
-    // Both of these replacements are safe because we've already split
-    // any potential inner class into a separate field (innerClass).
-    // So we can do a simple . -> / replace without worrying about
-    // clobbering the one . that should remain for inner classes.
-    if (innerClass != null) {
-      return InternalName.toSourceName(outerClass) + "." + innerClass;
-    } else {
-      return name.replace('/', '.');
-    }
-  }
-
-  /**
    * @return the internal outerClass name (or null if not an inner class)
    */
   public String getOuterClass() {
