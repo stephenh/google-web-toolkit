@@ -39,7 +39,6 @@ import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplDat
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
-import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -246,7 +245,7 @@ public final class CompilingClassLoader extends ClassLoader implements
      */
     private Class<?> getClassFromBinaryOrSourceName(String className) {
       // Try the type oracle first
-      JClassType type = typeOracle.findType(SourceOrBinaryName.toSourceName(className));
+      JClassType type = typeOracle.findTypeBySourceOrBinaryName(className);
       if (type != null) {
         // Use the type oracle to compute the exact binary name
         String jniSig = type.getJNISignature();

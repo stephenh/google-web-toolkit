@@ -18,14 +18,15 @@ package com.google.gwt.dev.javac.typemodel;
 import com.google.gwt.core.ext.typeinfo.BadTypeArgsException;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.ParseException;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.javac.JavaSourceParser;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 
@@ -384,7 +385,21 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
 
   @Override
   public JClassType findTypeByInternalName(String internalName) {
+    assert Name.isInternalName(internalName);
     return internalMapper.get(internalName);
+  }
+
+  @Override
+  public JClassType findTypeBySourceOrBinaryName(String name) {
+    JClassType bySource = allTypes.get(name);
+    if (bySource != null) {
+      return bySource;
+    }
+    JClassType byBinary = internalMapper.get(BinaryName.toInternalName(name));
+    if (byBinary != null) {
+      return byBinary;
+    }
+    return null;
   }
 
   /**
