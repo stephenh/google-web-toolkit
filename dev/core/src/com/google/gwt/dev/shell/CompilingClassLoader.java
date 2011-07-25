@@ -37,7 +37,6 @@ import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
@@ -424,7 +423,7 @@ public final class CompilingClassLoader extends ClassLoader implements
        */
       for (String intfName : jsoData.getSingleJsoIntfTypes()) {
         // We only store the name in the data block to keep it lightweight
-        JClassType intf = typeOracle.findType(Name.InternalName.toSourceName(intfName));
+        JClassType intf = typeOracle.findTypeByInternalName(intfName);
         JClassType jso = typeOracle.getSingleJsoImpl(intf);
         for (JMethod method : intf.getMethods()) {
           JClassType implementingJso = findImplementingTypeForMethod(jso,
@@ -455,8 +454,7 @@ public final class CompilingClassLoader extends ClassLoader implements
         return createDescriptor(declaringClasses.iterator().next());
       }
       // Must check for assignability.
-      String sourceName = InternalName.toSourceName(desc);
-      JClassType declaredType = typeOracle.findType(sourceName);
+      JClassType declaredType = typeOracle.findTypeByInternalName(desc);
 
       // Check if I declare this directly.
       if (declaringClasses.contains(declaredType)) {

@@ -274,7 +274,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   }
 
   /**
-   * A map of fully-qualify source names (ie, use "." rather than "$" for nested
+   * A map of fully-qualified source names (ie, use "." rather than "$" for nested
    * classes) to JRealClassTypes.
    */
   private final Map<String, JRealClassType> allTypes = new HashMap<String, JRealClassType>();
@@ -286,6 +286,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   @SuppressWarnings("unchecked")
   private final Map<JType, JArrayType> arrayTypes = new ReferenceIdentityMap(
       AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
+
+  /**
+   * A map of fully-qualified internal names, passed in by the TypeOracleMediator.
+   */
+  private Map<String, JRealClassType> internalMapper;
 
   /**
    * Cached singleton type representing <code>java.lang.Object</code>.
@@ -375,6 +380,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
       }
     }
     return null;
+  }
+
+  @Override
+  public JClassType findTypeByInternalName(String internalName) {
+    return internalMapper.get(internalName);
   }
 
   /**
@@ -682,6 +692,10 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     return parseImpl(type);
   }
 
+  public void initInternalMapper(Map<String, JRealClassType> internalMapper) {
+    this.internalMapper = internalMapper;
+  }
+
   void addNewType(JRealClassType newType) {
     String fqcn = newType.getQualifiedSourceName();
     allTypes.put(fqcn, newType);
@@ -973,4 +987,5 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     JClassType[] typeArgs = typeArgList.toArray(new JClassType[typeArgList.size()]);
     return typeArgs;
   }
+
 }

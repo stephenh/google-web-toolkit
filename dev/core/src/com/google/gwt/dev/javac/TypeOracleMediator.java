@@ -352,6 +352,11 @@ public class TypeOracleMediator extends TypeOracleBuilder {
 
   private final Set<JRealClassType> resolved = new HashSet<JRealClassType>();
 
+  public TypeOracleMediator() {
+    // Leak internalMapper into TypeOracle so it can do both internal and source name look up
+    typeOracle.initInternalMapper(internalMapper);
+  }
+
   /**
    * Adds new units to an existing TypeOracle.
    *
