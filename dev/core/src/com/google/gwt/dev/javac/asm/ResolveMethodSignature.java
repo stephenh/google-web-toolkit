@@ -157,7 +157,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     JType[] bound = new JClassType[1];
     bounds.add(bound);
     return new ResolveTypeSignature(resolver, resolver.getBinaryMapper(),
-        logger, bound, typeParamLookup, null);
+        logger, bound, typeParamLookup);
   }
 
   @Override
@@ -165,7 +165,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     JClassType[] exc = new JClassType[1];
     exceptions.add(exc);
     return new ResolveTypeSignature(resolver, resolver.getBinaryMapper(),
-        logger, exc, typeParamLookup, null);
+        logger, exc, typeParamLookup);
   }
 
   @Override
@@ -180,7 +180,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     JType[] bound = new JType[1];
     bounds.add(bound);
     return new ResolveTypeSignature(resolver, resolver.getBinaryMapper(),
-        logger, bound, typeParamLookup, null);
+        logger, bound, typeParamLookup);
   }
 
   @Override
@@ -188,13 +188,13 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     JType[] param = new JType[1];
     params.add(param);
     return new ResolveTypeSignature(resolver, resolver.getBinaryMapper(),
-        logger, param, typeParamLookup, null);
+        logger, param, typeParamLookup);
   }
 
   @Override
   public SignatureVisitor visitReturnType() {
     return new ResolveTypeSignature(resolver, resolver.getBinaryMapper(),
-        logger, returnType, typeParamLookup, null);
+        logger, returnType, typeParamLookup);
   }
 
   private void finishBound() {

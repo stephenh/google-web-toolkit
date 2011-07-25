@@ -46,7 +46,6 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
   private final JType[] returnTypeRef;
   private final TypeParameterLookup lookup;
   private final char wildcardMatch;
-  private final JClassType enclosingClass;
 
   private JClassType outerClass;
   private final List<JType[]> args = new ArrayList<JType[]>();
@@ -60,26 +59,22 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
    * @param logger
    * @param returnTypeRef "pointer" to return location, ie. 1-element array
    * @param lookup
-   * @param enclosingClass
    */
   public ResolveTypeSignature(Resolver resolver,
       Map<String, JRealClassType> binaryMapper, TreeLogger logger,
-      JType[] returnTypeRef, TypeParameterLookup lookup,
-      JClassType enclosingClass) {
-    this(resolver, binaryMapper, logger, returnTypeRef, lookup, enclosingClass,
-        '=');
+      JType[] returnTypeRef, TypeParameterLookup lookup) {
+    this(resolver, binaryMapper, logger, returnTypeRef, lookup, '=');
   }
 
   public ResolveTypeSignature(Resolver resovler,
       Map<String, JRealClassType> binaryMapper, TreeLogger logger,
       JType[] returnTypeRef, TypeParameterLookup lookup,
-      JClassType enclosingClass, char wildcardMatch) {
+      char wildcardMatch) {
     this.resolver = resovler;
     this.binaryMapper = binaryMapper;
     this.logger = logger;
     this.returnTypeRef = returnTypeRef;
     this.lookup = lookup;
-    this.enclosingClass = enclosingClass;
     this.wildcardMatch = wildcardMatch;
   }
 
@@ -129,7 +124,8 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
   @Override
   public void visitClassType(String internalName) {
     assert Name.isInternalName(internalName);
-    outerClass = enclosingClass;
+    // TODO(stephenh): Why was this here if enclosingClass was always null?
+    // outerClass = enclosingClass;
     JRealClassType classType = binaryMapper.get(internalName);
     // TODO(jat): failures here are likely binary-only annotations or local
     // classes that have been elided from TypeOracle -- what should we do in
@@ -193,7 +189,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
     // I haven't found a case where it is actually used while processing
     // the type argument.
     return new ResolveTypeSignature(resolver, binaryMapper, logger, arg,
-        lookup, null, wildcard);
+        lookup, wildcard);
   }
 
   @Override

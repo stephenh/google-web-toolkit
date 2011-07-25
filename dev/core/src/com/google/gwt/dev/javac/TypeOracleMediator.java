@@ -988,7 +988,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       SignatureReader reader = new SignatureReader(signature);
       JType[] fieldTypeRef = new JType[1];
       reader.acceptType(new ResolveTypeSignature(context.resolver, binaryMapper,
-          logger, fieldTypeRef, typeParamLookup, null));
+          logger, fieldTypeRef, typeParamLookup));
       fieldType = fieldTypeRef[0];
 
     } else {

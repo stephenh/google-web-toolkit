@@ -98,7 +98,7 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
     JType[] bound = new JType[1];
     bounds.add(bound);
     return new ResolveTypeSignature(resolver, binaryMapper, logger, bound,
-        lookup, null);
+        lookup);
   }
 
   @Override
@@ -114,7 +114,7 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
     JType[] intf = new JType[1];
     interfaces.add(intf);
     return new ResolveTypeSignature(resolver, binaryMapper, logger, intf,
-        lookup, null);
+        lookup);
   }
 
   @Override
@@ -122,13 +122,13 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
     JType[] bound = new JType[1];
     bounds.add(bound);
     return new ResolveTypeSignature(resolver, binaryMapper, logger, bound,
-        lookup, null);
+        lookup);
   }
 
   @Override
   public SignatureVisitor visitSuperclass() {
     finish();
     return new ResolveTypeSignature(resolver, binaryMapper, logger, superClass,
-        lookup, null);
+        lookup);
   }
 }
