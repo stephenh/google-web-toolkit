@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.CorrelationFactory;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -25,8 +26,6 @@ import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
-import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.IOException;
@@ -307,6 +306,8 @@ public class JProgram extends JNode {
 
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
+  private transient TypeOracle otherTypeOracle;
+
   /**
    * Special serialization treatment.
    */
@@ -352,7 +353,11 @@ public class JProgram extends JNode {
 
   private JClassType typeJavaLangObject;
 
+  /** Map of binary name to JDeclaredType */
   private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
+
+  /** Map of source name to JDeclaredType */
+  private final Map<String, JDeclaredType> typeNameMapBySource = new HashMap<String, JDeclaredType>();
 
   private List<JReferenceType> typesByQueryId;
 
@@ -362,8 +367,8 @@ public class JProgram extends JNode {
 
   private JClassType typeString;
 
-  public JProgram() {
-    this(DummyCorrelationFactory.INSTANCE);
+  public JProgram(TypeOracle otherTypeOracle) {
+    this(otherTypeOracle, DummyCorrelationFactory.INSTANCE);
   }
 
   /**
@@ -374,9 +379,9 @@ public class JProgram extends JNode {
    *          will collect extra data during the compilation cycle, but at a
    *          cost of memory and object allocations.
    */
-  public JProgram(CorrelationFactory correlator) {
+  public JProgram(TypeOracle otherTypeOracle, CorrelationFactory correlator) {
     super(correlator.makeSourceInfo(SourceOrigin.create(0, JProgram.class.getName())));
-
+    this.otherTypeOracle = otherTypeOracle;
     this.correlator = correlator;
   }
 
@@ -750,7 +755,12 @@ public class JProgram extends JNode {
   }
 
   public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
-    return typeNameMap.get(SourceOrBinaryName.toSourceName(qualifiedBinaryOrSourceName));
+    JDeclaredType byBinary = typeNameMap.get(qualifiedBinaryOrSourceName);
+    if (byBinary != null) {
+      return byBinary;
+    }
+    JDeclaredType bySource = typeNameMapBySource.get(qualifiedBinaryOrSourceName);
+    return bySource;
   }
 
   public JField getIndexedField(String string) {
@@ -998,7 +1008,11 @@ public class JProgram extends JNode {
   }
 
   public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
-    typeNameMap.put(BinaryName.toSourceName(qualifiedBinaryName), type);
+    typeNameMap.put(qualifiedBinaryName, type);
+    com.google.gwt.core.ext.typeinfo.JClassType classType = otherTypeOracle.findTypeBySourceOrBinaryName(qualifiedBinaryName);
+    if (classType != null) {
+      typeNameMapBySource.put(classType.getQualifiedSourceName(), type);
+    }
   }
 
   public void putStaticImpl(JMethod method, JMethod staticImpl) {

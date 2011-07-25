@@ -16,7 +16,6 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
 
 import junit.framework.TestCase;
@@ -56,17 +55,6 @@ public class NameTest extends TestCase {
         BinaryName.toInternalName("org.test.Foo$$Bar$1"));
     assertEquals("Foo$Bar", BinaryName.getClassName("org.test.Foo$Bar"));
     assertEquals("Bar", BinaryName.getShortClassName("org.test.Foo$Bar"));
-  }
-
-  public void testSourceOrBinaryName() {
-    assertEquals("org.test.Foo.Bar",
-        SourceOrBinaryName.toSourceName("org.test.Foo.Bar"));
-    assertEquals("org.test.Foo.Bar",
-        SourceOrBinaryName.toSourceName("org.test.Foo$Bar"));
-    assertEquals("org.test.Foo.Bar$",
-        SourceOrBinaryName.toSourceName("org.test.Foo.Bar$"));
-    assertEquals("org.test.Foo.Bar$",
-        SourceOrBinaryName.toSourceName("org.test.Foo$Bar$"));
   }
 
   public void testGetBinaryNameForClass() {

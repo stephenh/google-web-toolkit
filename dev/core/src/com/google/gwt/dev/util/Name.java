@@ -96,20 +96,6 @@ public class Name {
       }
     }
 
-  /**
-   * Represents a Java class name in either source or binary form, for example:
-   * {@code org.example.Foo.Bar or org.example.Foo$Bar}.
-   * 
-   * See {@link "http://java.sun.com/docs/books/jls/third_edition/html/binaryComp.html#59892"}
-   */
-  public static class SourceOrBinaryName {
-
-    public static String toSourceName(String dottedName) {
-      // don't change a trailing $ to a .
-      return NEXT_LETTER_CAPITAL.matcher(dottedName).replaceAll(".$1");
-    }
-  }
-
   private static final Pattern NEXT_LETTER_CAPITAL =
     Pattern.compile("[$]([A-Z])");
 
