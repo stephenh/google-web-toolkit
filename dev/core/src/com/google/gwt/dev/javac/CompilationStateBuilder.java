@@ -115,6 +115,7 @@ public class CompilationStateBuilder {
           }
           for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
             // TODO(stephenh) Kill crappy source -> internal conversion
+            // https://github.com/scalagwt/scalagwt-gwt/issues/1
             unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef).replace('.', '/')));
           }
           for (String jsniDep : jsniDeps) {
@@ -489,6 +490,8 @@ public class CompilationStateBuilder {
   }
 
   private static byte[] readBytes(CompilationUnitBuilder cub) {
+    // TODO(stephenh) Somehow load forked scala-library bytecode
+    // https://github.com/scalagwt/scalagwt-gwt/issues/2
     String classFile = cub.getTypeName().replace('.', '/') + ".class";
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();

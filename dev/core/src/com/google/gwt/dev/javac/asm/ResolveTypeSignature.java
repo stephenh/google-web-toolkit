@@ -135,6 +135,8 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
         logger, classType);
     returnTypeRef[0] = classType;
     if (!resolveSuccess || returnTypeRef[0] == null) {
+      // TODO(stephenh) Remove check once forked scala-library bytecode is available
+      // https://github.com/scalagwt/scalagwt-gwt/issues/2
       if (!internalName.startsWith("scala/")) {
         logger.log(TreeLogger.ERROR, "Unable to resolve class " + internalName);
       }

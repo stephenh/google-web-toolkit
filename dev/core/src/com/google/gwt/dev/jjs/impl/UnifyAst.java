@@ -896,7 +896,8 @@ public class UnifyAst {
     for (JField field : type.getFields()) {
       String sig = type.getName() + '.' + field.getSignature();
       fieldMap.put(sig, field);
-      // jribble fields don't have types in their signature
+      // External jribble fields always have type void
+      // (because it's unknown at mini AST creation time)
       int colon = sig.indexOf(':');
       fieldMap.put(sig.substring(0, colon + 1) + "V", field);
     }

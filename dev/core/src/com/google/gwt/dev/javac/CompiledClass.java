@@ -123,6 +123,7 @@ public final class CompiledClass implements Serializable {
       // assert outer != null : "outer class not found for " + cd.getInnerClass();
       if (outer == null) {
         // TODO(stephenh) Remove this when RedBlack is fixed
+        // https://github.com/scalagwt/scalagwt-gwt/issues/4
         return InternalName.toSourceName(cd.getOuterClass());
       }
       // recurse for nested inner types, e.g. foo.Bar.Zaz.Zip

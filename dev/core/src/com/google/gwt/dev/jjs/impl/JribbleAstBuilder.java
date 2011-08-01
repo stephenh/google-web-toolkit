@@ -169,8 +169,9 @@ import scala.Tuple3;
 
 /**
  * Class that transforms jribble AST into a per-CompilationUnit GWT mini AST.
- * 
- * todo: interning
+ *
+ * TODO(stephenh) Interning
+ * https://github.com/scalagwt/scalagwt-gwt/issues/7
  */
 public class JribbleAstBuilder {
 
@@ -193,13 +194,10 @@ public class JribbleAstBuilder {
   // reset on each invocation of process
   private ArrayList<JDeclaredType> newTypes;
   private MethodArgNamesLookup methodArgNames;
-  // Unlike {@ReferenceMapper}, we'll never have java.lang source types, so we don't have to reset
-  // these
   private JClassType javaLangClass = mapper.getClassType("java.lang.Class");
   private JClassType javaLangString = mapper.getClassType("java.lang.String");
 
   public Result process(DeclaredType declaredType) {
-    // todo: handle multiple DeclaredTypes within a single CompilationUnit?
     newTypes = new ArrayList<JDeclaredType>();
     methodArgNames = new MethodArgNamesLookup();
     try {
@@ -281,7 +279,8 @@ public class JribbleAstBuilder {
       createSyntheticMethod(UNKNOWN, "$init", gwtType, JPrimitiveType.VOID, false, false, true,
           true);
 
-      // TODO check JSORestrictionsChecker
+      // TODO Check JSORestrictionsChecker if this is a JSO
+      // https://github.com/scalagwt/scalagwt-gwt/issues/8
       assert gwtType.getMethods().size() == 2;
       createSyntheticMethod(UNKNOWN, "getClass", gwtType, javaLangClass, false, false, false, false);
 
