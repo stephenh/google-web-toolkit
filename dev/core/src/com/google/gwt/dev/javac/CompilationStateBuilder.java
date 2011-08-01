@@ -353,27 +353,21 @@ public class CompilationStateBuilder {
       for (CompilationUnitBuilder cub : jribbleBuilders) {
         // assume one CompiledClass per CompilationUnit
         System.out.println("Compiling " + cub.getTypeName());
-        try {
-          CompiledClass cc =
-              new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()));
-          DeclaredType declaredType = JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
-          JribbleAstBuilder.Result result = jribbleAstBuilder.process(declaredType);
-          cub.setTypes(result.types);
-          cub.setDependencies(Dependencies.buildFromApiRefs(cc.getPackageName(), newArrayList(result.apiRefs)));
-          cub.setMethodArgs(result.methodArgNames);
-          cub.setClasses(newArrayList(cc));
-          cub.setJsniMethods(new ArrayList<JsniMethod>());
-          // allValidClasses is maintained by the JDT UnitProcessorImpl, which we don't hit, so update it here
-          allValidClasses.put(cc.getInternalName(), cc);
-          // Add classes to the JDT compiler in case .java files refer to .scala files
-          // (Can't use addValidUnit because our CompilationUnit hasn't been built yet in the build queue yet)
-          compiler.addCompiledClass(cc);
-          buildQueue.add(cub);
-        } catch (Exception e) {
-          System.out.println("ERROR: " + e.getMessage());
-        } catch (AssertionError ae) {
-          System.out.println("ERROR: " + ae.getMessage());
-        }
+        CompiledClass cc =
+            new CompiledClass(readBytes(cub), null, false, BinaryName.toInternalName(cub.getTypeName()));
+        DeclaredType declaredType = JribbleParser.parse(logger, cub.getTypeName(), cub.getSource());
+        JribbleAstBuilder.Result result = jribbleAstBuilder.process(declaredType);
+        cub.setTypes(result.types);
+        cub.setDependencies(Dependencies.buildFromApiRefs(cc.getPackageName(), newArrayList(result.apiRefs)));
+        cub.setMethodArgs(result.methodArgNames);
+        cub.setClasses(newArrayList(cc));
+        cub.setJsniMethods(new ArrayList<JsniMethod>());
+        // allValidClasses is maintained by the JDT UnitProcessorImpl, which we don't hit, so update it here
+        allValidClasses.put(cc.getInternalName(), cc);
+        // Add classes to the JDT compiler in case .java files refer to .scala files
+        // (Can't use addValidUnit because our CompilationUnit hasn't been built yet in the build queue yet)
+        compiler.addCompiledClass(cc);
+        buildQueue.add(cub);
       }
     }
   }
