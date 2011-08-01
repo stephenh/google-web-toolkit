@@ -39,9 +39,6 @@ public class NameTest extends TestCase {
         BinaryName.toSourceName("org.test.Foo$Bar$Baz"));
     assertEquals("org.test.Foo.Bar.Baz$",
         BinaryName.toSourceName("org.test.Foo$Bar$Baz$"));
-    // for fun scala types
-    assertEquals("org.test.$colon$colon",
-        BinaryName.toSourceName("org.test.$colon$colon"));
     assertEquals("org/test/Foo", BinaryName.toInternalName("org.test.Foo"));
     assertEquals("org/test/Foo$Bar",
         BinaryName.toInternalName("org.test.Foo$Bar"));
@@ -75,9 +72,6 @@ public class NameTest extends TestCase {
         InternalName.toSourceName("org/test/Foo$Bar$Baz"));
     assertEquals("org.test.Foo.Bar.Baz$",
         InternalName.toSourceName("org/test/Foo$Bar$Baz$"));
-    // for fun scala types
-    assertEquals("org.test.$colon$colon",
-        InternalName.toSourceName("org/test/$colon$colon"));
     assertEquals("org.test.Foo", InternalName.toBinaryName("org/test/Foo"));
     assertEquals("org.test.Foo$Bar",
         InternalName.toBinaryName("org/test/Foo$Bar"));
