@@ -72,8 +72,15 @@ public class ResolveClassSignature extends EmptySignatureVisitor {
         // The generic signature contains a superclass for interfaces,
         // but TypeOracle doesn't like that -- verify that we were
         // told Object is the superclass and ignore it.
-        // ...except Scala interfaces can have super classes, see GenTraversableFactory
-        // assert superClass[0].equals(resolver.getTypeOracle().getJavaLangObject());
+        // ...except Scala signatures don't list java.lang.Object first in interface
+        // signatures (see TraversableFactory), so manually addImplementedInterface if needed
+        if (superClass[0].equals(resolver.getTypeOracle().getJavaLangObject())) {
+          // okay to ignore
+        } else {
+          // TODO(stephenh) Remove this if scala signatures change to include java.lang.Object
+          // https://github.com/scalagwt/scalagwt-gwt/issues/6
+          resolver.addImplementedInterface(type, (JClassType) superClass[0]);
+        }
       } else {
         resolver.setSuperClass(type, (JClassType) superClass[0]);
       }
