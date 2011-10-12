@@ -162,7 +162,7 @@ public abstract class BaseMessageInterpolator implements MessageInterpolator {
     return sb.toString();
   }
 
-  private final String removeCurlyBrace(String parameter) {
+  private String removeCurlyBrace(String parameter) {
     return parameter.substring(1, parameter.length() - 1);
   }
 }

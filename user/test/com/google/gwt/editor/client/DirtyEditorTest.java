@@ -1,16 +1,14 @@
 /*
  * Copyright 2011 Google Inc.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.editor.client;
@@ -98,9 +96,10 @@ public class DirtyEditorTest extends GWTTestCase {
     person.address = null;
 
     AddressEditor addressEditor = new AddressEditor();
-    PersonEditorWithOptionalAddressEditor editor = new PersonEditorWithOptionalAddressEditor(
-        addressEditor);
-    PersonEditorWithOptionalAddressDriver driver = GWT.create(PersonEditorWithOptionalAddressDriver.class);
+    PersonEditorWithOptionalAddressEditor editor =
+        new PersonEditorWithOptionalAddressEditor(addressEditor);
+    PersonEditorWithOptionalAddressDriver driver =
+        GWT.create(PersonEditorWithOptionalAddressDriver.class);
     driver.initialize(editor);
     driver.edit(person);
 
@@ -177,23 +176,21 @@ public class DirtyEditorTest extends GWTTestCase {
   }
   class WorkgroupEditor implements Editor<Workgroup> {
     SimpleEditor<String> label = SimpleEditor.of();
-    OptionalFieldEditor<List<Person>, ListEditor<Person, PersonEditor>> people = //
-    OptionalFieldEditor.of(ListEditor.<Person, PersonEditor> of( //
-    new EditorSource<PersonEditor>() {
-      @Override
-      public PersonEditor create(int index) {
-        return new PersonEditor();
-      }
-    }));
+    OptionalFieldEditor<List<Person>, ListEditor<Person, PersonEditor>> people =
+        OptionalFieldEditor.of(ListEditor.of(new EditorSource<PersonEditor>() {
+          @Override
+          public PersonEditor create(int index) {
+            return new PersonEditor();
+          }
+        }));
   }
 
-  interface WorkgroupEditorDriver extends
-      SimpleBeanEditorDriver<Workgroup, WorkgroupEditor> {
+  interface WorkgroupEditorDriver extends SimpleBeanEditorDriver<Workgroup, WorkgroupEditor> {
   }
 
   /**
-   * CompositeEditors have an implementation complication due to the EditorChain
-   * needing to patch the composite editors into the hierarchy.
+   * CompositeEditors have an implementation complication due to the EditorChain needing to patch
+   * the composite editors into the hierarchy.
    */
   public void testDirtyOptionalList() {
     WorkgroupEditorDriver driver = GWT.create(WorkgroupEditorDriver.class);
