@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
@@ -590,7 +591,7 @@ public final class CompilingClassLoader extends ClassLoader implements
            * target.
            */
           JMethod implementingMethod;
-          while ((implementingMethod = findOverloadUsingErasure(
+          while ((implementingMethod = findImplementingMethod(
               implementingType, intfMethod)) == null) {
             implementingType = implementingType.getSuperclass();
           }
@@ -686,34 +687,6 @@ public final class CompilingClassLoader extends ClassLoader implements
           map.put(key, maybeOther);
         }
       }
-    }
-
-    /**
-     * Looks for a concrete implementation of <code>intfMethod</code> in
-     * <code>implementingType</code>.
-     */
-    private JMethod findOverloadUsingErasure(JClassType implementingType,
-        JMethod intfMethod) {
-
-      int numParams = intfMethod.getParameters().length;
-      JType[] erasedTypes = new JType[numParams];
-      for (int i = 0; i < numParams; i++) {
-        erasedTypes[i] = intfMethod.getParameters()[i].getType().getErasedType();
-      }
-
-      outer : for (JMethod method : implementingType.getOverloads(intfMethod.getName())) {
-        JParameter[] params = method.getParameters();
-        if (params.length != numParams) {
-          continue;
-        }
-        for (int i = 0; i < numParams; i++) {
-          if (params[i].getType().getErasedType() != erasedTypes[i]) {
-            continue outer;
-          }
-        }
-        return method;
-      }
-      return null;
     }
   }
 
@@ -853,14 +826,77 @@ public final class CompilingClassLoader extends ClassLoader implements
     }
   }
 
+  private static JClassType findDeclaringClass(JClassType type, JTypeParameter typeParam) {
+    while (type != null) {
+      if (type.isGenericType() != null) {
+        for (JTypeParameter otherParam : type.isGenericType().getTypeParameters()) {
+          if (otherParam == typeParam) {
+            return type;
+          }
+        }
+      }
+      type = type.getSuperclass();
+    }
+    return null;
+  }
+
+  private static JClassType findImplementedInterface(JClassType type, JClassType interfaceType) {
+    for (JClassType potential : type.getImplementedInterfaces()) {
+      if (potential.isParameterized() != null && potential.isParameterized().getBaseType() == interfaceType) {
+        return potential;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Looks for a concrete implementation of <code>intfMethod</code> in
+   * <code>implementingType</code>.
+   */
+  private static JMethod findImplementingMethod(JClassType implementingType, JMethod intfMethod) {
+    JType[] types = new JType[intfMethod.getParameterTypes().length];
+    int i = 0;
+    for (JType type : intfMethod.getParameterTypes()) {
+      JType potentiallyMapped = type;
+      if (type.isTypeParameter() != null) {
+        // Found a type parameter in the intfMethod--need to substitute it
+        // E.g. Sameable<T>.isSame(T), type = T, resolve T->Bean so Bean.isSame(Bean) will match
+        // find owner of T--might be superclass of intfMethod.enclosing
+        JClassType typeParamOwner = findDeclaringClass(intfMethod.getEnclosingType(), type.isTypeParameter());
+        if (typeParamOwner != null) {
+          // find "implements Sameable<MyBean>" declaration
+          JClassType typeParamOwnerImpl = findImplementedInterface(implementingType, typeParamOwner);
+          if (typeParamOwnerImpl != null) {
+            // find offset of T within Sameable
+            int offset = Arrays.asList(typeParamOwner.isGenericType().getTypeParameters()).indexOf(type);
+            // and replace T with what is in it's position
+            potentiallyMapped = typeParamOwnerImpl.isParameterized().getTypeArgs()[offset];
+          }
+        }
+      }
+      types[i++] = potentiallyMapped;
+    }
+    outer : for (JMethod method : implementingType.getOverloads(intfMethod.getName())) {
+      JParameter[] params = method.getParameters();
+      if (params.length != types.length) {
+        continue;
+      }
+      for (int k = 0; k < types.length; k++) {
+        if (params[k].getType() != types[k]) {
+          continue outer;
+        }
+      }
+      return method;
+    }
+    return null;
+  }
+
   private static JClassType findImplementingTypeForMethod(JClassType type,
       JMethod method) {
-    JType[] methodParamTypes = method.getErasedParameterTypes();
     while (type != null) {
-      for (JMethod candidate : type.getMethods()) {
-        if (hasMatchingErasedSignature(method, methodParamTypes, candidate)) {
-          return type;
-        }
+      JMethod candidate = findImplementingMethod(type, method);
+      if (candidate != null) {
+        return candidate.getEnclosingType();
       }
       type = type.getSuperclass();
     }
@@ -879,26 +915,6 @@ public final class CompilingClassLoader extends ClassLoader implements
     } finally {
       Utility.close(is);
     }
-  }
-
-  private static boolean hasMatchingErasedSignature(JMethod a,
-      JType[] aParamTypes, JMethod b) {
-    if (!a.getName().equals(b.getName())) {
-      return false;
-    }
-
-    JType[] bParamTypes = b.getErasedParameterTypes();
-    if (aParamTypes.length != bParamTypes.length) {
-      return false;
-    }
-
-    for (int i = 0; i < aParamTypes.length; ++i) {
-      if (aParamTypes[i] != bParamTypes[i]) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /**
@@ -1333,9 +1349,7 @@ public final class CompilingClassLoader extends ClassLoader implements
   }
 
   private String getBinaryName(JClassType type) {
-    String name = type.getPackage().getName() + '.';
-    name += type.getName().replace('.', '$');
-    return name;
+    return type.getQualifiedBinaryName();
   }
 
   private String getBinaryOrPrimitiveName(JType type) {
