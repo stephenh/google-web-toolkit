@@ -29,7 +29,6 @@ import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Util;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.apt.RfValidator;
@@ -265,7 +264,7 @@ public class RequestFactoryJarExtractor {
     }
 
     private static String print(Type type) {
-      return SourceOrBinaryName.toSourceName(type.getClassName());
+      return type.getClassName();
     }
 
     private final Logger logger;

@@ -62,6 +62,7 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -210,7 +211,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
       List<TypeData> results = new ArrayList<TypeData>();
       String packageName = Shared.getPackageName(aClass.getName());
       TypeData newData =
-          new TypeData(packageName, aClass.getSimpleName(), aClass.getName().replace(".", "/"),
+          new TypeData(packageName, BinaryName.toInternalName(aClass.getName()),
               null, getByteCode(aClass), System.currentTimeMillis());
       results.add(newData);
       Class<?>[] subclasses = aClass.getDeclaredClasses();

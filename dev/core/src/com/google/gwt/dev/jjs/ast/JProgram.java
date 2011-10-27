@@ -15,12 +15,14 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.IOException;
@@ -318,6 +320,9 @@ public class JProgram extends JNode {
 
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
+  // Only used to populated typeNameMap, so can be transient
+  private final transient CompilationState compilationState;
+
   /**
    * Special serialization treatment.
    */
@@ -360,7 +365,7 @@ public class JProgram extends JNode {
 
   private JClassType typeJavaLangObject;
 
-  // Map of binary name to JDeclaredType
+  // Map of binary name and source name to JDeclaredType
   private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
 
   private List<JReferenceType> typesByQueryId;
@@ -374,13 +379,11 @@ public class JProgram extends JNode {
   /**
    * Constructor.
    * 
-   * @param correlator Controls whether or not SourceInfo nodes created via the
-   *          JProgram will record descendant information. Enabling this feature
-   *          will collect extra data during the compilation cycle, but at a
-   *          cost of memory and object allocations.
+   * @param compilationState used for binary/source name looking
    */
-  public JProgram() {
+  public JProgram(CompilationState compilationState) {
     super(SourceOrigin.UNKNOWN);
+    this.compilationState = compilationState;
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -653,9 +656,8 @@ public class JProgram extends JNode {
   }
 
   public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
-    String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
-
-    return typeNameMap.get(srcTypeName);
+    // typeNameMap has keys for both binary and source names
+    return typeNameMap.get(qualifiedBinaryOrSourceName);
   }
 
   public JField getIndexedField(String string) {
@@ -903,9 +905,15 @@ public class JProgram extends JNode {
   }
 
   public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
-    // Make it into a source type name.
-    String srcTypeName = qualifiedBinaryName.replace('$', '.');
-    typeNameMap.put(srcTypeName, type);
+    typeNameMap.put(qualifiedBinaryName, type);
+    if (compilationState != null) {
+      String internalName = BinaryName.toInternalName(qualifiedBinaryName);
+      // sourceName may be null for types that don't exist in compilationState, like Enum.MAP
+      String sourceName = compilationState.getSourceName(internalName);
+      if (sourceName != null && !sourceName.equals(qualifiedBinaryName)) {
+        typeNameMap.put(sourceName, type);
+      }
+    }
   }
 
   public void putStaticImpl(JMethod method, JMethod staticImpl) {

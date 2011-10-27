@@ -231,7 +231,7 @@ public class JjsTypeTest extends TestCase {
 
   private void createSampleProgram() {
     // Make the program itself
-    program = new JProgram();
+    program = new JProgram(null);
     typeOracle = program.typeOracle;
     synthSource = SourceOrigin.UNKNOWN;
 

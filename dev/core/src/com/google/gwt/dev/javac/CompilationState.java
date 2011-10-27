@@ -127,6 +127,20 @@ public class CompilationState {
     return exposedUnits;
   }
 
+  /**
+   * Returns the source name for {@code internalName}, possibly {@code null} if not found.
+   *
+   * Returning {@code null} should only happen for types that are not from compilation
+   * units, e.g. the Enum.MAP class created in GwtAstBuilder.
+   */
+  public String getSourceName(String internalName) {
+    CompiledClass cc = classFileMap.get(internalName);
+    if (cc != null) {
+      return cc.getSourceName(classFileMap);
+    }
+    return null;
+  }
+
   public TypeOracle getTypeOracle() {
     return mediator.getTypeOracle();
   }
@@ -156,7 +170,12 @@ public class CompilationState {
       unitMap.put(unit.getTypeName(), unit);
       for (CompiledClass compiledClass : unit.getCompiledClasses()) {
         classFileMap.put(compiledClass.getInternalName(), compiledClass);
-        classFileMapBySource.put(compiledClass.getSourceName(), compiledClass);
+      }
+    }
+    // Make a 2nd pass to create classFileMapBySource only after classFileMap is fully populated
+    for (CompilationUnit unit : units) {
+      for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+        classFileMapBySource.put(compiledClass.getSourceName(classFileMap), compiledClass);
       }
     }
     CompilationUnitInvalidator.retainValidUnits(logger, units,

@@ -483,11 +483,11 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
     // dependencies
     Dependencies deps = unit.getDependencies();
-    assertObjectInDeps(deps.qualified, deps.simple, "java.lang.Object",
+    assertObjectInDeps(deps.qualified, deps.simple, "java/lang/Object",
         "Object");
-    assertObjectInDeps(deps.qualified, deps.simple, "java.lang.String",
+    assertObjectInDeps(deps.qualified, deps.simple, "java/lang/String",
         "String");
-    assertObjectInDeps(deps.qualified, deps.simple, "test.SerializationTest",
+    assertObjectInDeps(deps.qualified, deps.simple, "test/SerializationTest",
         "SerializationTest");
 
     // method args lookup
@@ -526,10 +526,10 @@ public class CompilationStateTest extends CompilationStateTestBase {
       Map<String, Ref> simple, String qualifiedName, String simpleName) {
     Ref qualifiedRef = qualified.get(qualifiedName);
     assertNotNull(qualifiedRef);
-    assertEquals(qualifiedName, qualifiedRef.getInternalName().replace("/", "."));
+    assertEquals(qualifiedName, qualifiedRef.getInternalName());
     Ref simpleRef = simple.get(simpleName);
     assertNotNull(simpleRef);
-    assertEquals(qualifiedName,simpleRef.getInternalName().replace("/", "."));
+    assertEquals(qualifiedName,simpleRef.getInternalName());
   }
 
   private void validateSerializedUnit(CompilationUnit originalUnit,

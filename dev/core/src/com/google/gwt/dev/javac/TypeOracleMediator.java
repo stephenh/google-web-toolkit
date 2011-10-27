@@ -49,7 +49,6 @@ import com.google.gwt.dev.javac.typemodel.JWildcardType;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.javac.typemodel.TypeOracleBuilder;
 import com.google.gwt.dev.util.Name;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -115,22 +114,16 @@ public class TypeOracleMediator extends TypeOracleBuilder {
      */
     private final String sourceFileResourceName;
 
-    /**
-     * See {@link JType#getQualifiedSourceName()}.
-     */
-    private final String sourceName;
-
-    protected TypeData(String packageName, String sourceName,
+    protected TypeData(String packageName,
         String internalName, String sourceFileResourceName, byte[] classBytes,
         long lastModifiedTime) {
       this.packageName = packageName;
-      this.sourceName = sourceName;
       this.internalName = internalName;
       this.sourceFileResourceName = sourceFileResourceName;
       this.byteCode = classBytes;
       this.lastModifiedTime = lastModifiedTime;
     }
-    
+
     /**
      * Collects data about a class which only needs the bytecode and no TypeOracle
      * data structures. This is used to make the initial shallow identity pass for
@@ -275,6 +268,22 @@ public class TypeOracleMediator extends TypeOracleBuilder {
       return params.toArray(new JTypeParameter[params.size()]);
     }
     return NO_TYPE_PARAMETERS;
+  }
+
+  /**
+   * @return {@code Bar.Zaz} if {@code classData} is {@code foo.Bar.Zaz}
+   */
+  private static String getNestedName(TypeOracleBuildContext context, CollectClassData classData) {
+    if (classData == null) {
+      return null;
+    }
+    // does classData itself have an outer class?
+    if (classData.getOuterClass() != null) {
+      String outerName = getNestedName(context,
+          context.classMap.get(classData.getOuterClass()));
+      return outerName + "." + classData.getSimpleName();
+    }
+    return classData.getSimpleName();
   }
 
   private static JTypeParameter[] getTypeParametersForClass(
@@ -501,20 +510,16 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     return AnnotationProxyFactory.create(annotationClass, values);
   }
 
-  private JRealClassType createType(TypeData typeData,
+  private JRealClassType createType(TypeOracleBuildContext context, TypeData typeData,
       CollectClassData collectClassData, CollectClassData enclosingClassData) {
     int access = collectClassData.getAccess();
-    String qualifiedSourceName = typeData.sourceName;
-    String simpleName = Shared.getShortName(qualifiedSourceName);
+    String simpleName = collectClassData.getSimpleName();
     JRealClassType resultType = null;
     String jpkgName = typeData.packageName;
     JPackage pkg = typeOracle.getOrCreatePackage(jpkgName);
     boolean isIntf = (access & Opcodes.ACC_INTERFACE) != 0;
     assert !collectClassData.hasNoExternalName();
-    String enclosingTypeName = null;
-    if (enclosingClassData != null) {
-      enclosingTypeName = InternalName.toSourceName(InternalName.getClassName(enclosingClassData.getName()));
-    }
+    String enclosingTypeName = getNestedName(context, enclosingClassData);
     if ((access & Opcodes.ACC_ANNOTATION) != 0) {
       resultType = newAnnotationType(pkg, enclosingTypeName, simpleName);
     } else if ((access & Opcodes.ACC_ENUM) != 0) {
@@ -561,7 +566,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
         return null;
       }
     }
-    JRealClassType realClassType = createType(typeData, collectClassData,
+    JRealClassType realClassType = createType(context, typeData, collectClassData,
         enclosingClassData);
     unresolvedTypes.add(realClassType);
     return realClassType;

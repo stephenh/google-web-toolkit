@@ -73,7 +73,7 @@ class Dependencies implements Serializable {
   Dependencies(String myPackage, List<String> unresolvedQualified, List<String> unresolvedSimple,
       List<String> apiRefs) {
     this.myPackage =
-        StringInterner.get().intern((myPackage.length() == 0) ? "" : (myPackage + '.'));
+        StringInterner.get().intern((myPackage.length() == 0) ? "" : (myPackage + '/'));
     for (String qualifiedRef : unresolvedQualified) {
       qualified.put(qualifiedRef, null);
     }
@@ -154,7 +154,7 @@ class Dependencies implements Serializable {
     if (cc != null) {
       return cc;
     }
-    return allValidClasses.get("java.lang." + ref);
+    return allValidClasses.get("java/lang/" + ref);
   }
 
   /**

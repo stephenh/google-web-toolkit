@@ -32,8 +32,15 @@ public class CompiledClassTest extends TestCase {
    * Test for {@link CompiledClass#getSourceName()}.
    */
   public void testSourceName() throws Exception {
-    CompiledClass compiledClass = new CompiledClass(dummyByteCode, null, false, DUMMY_NAME);
-    assertEquals("com.example.DeadBeef", compiledClass.getSourceName());
+    byte[] realByteCode = Util.readStreamAsBytes(CompiledClassTest.class.getClassLoader()
+        .getResourceAsStream("com/google/gwt/dev/javac/CompiledClassTest.class"));
+
+    CompiledClass compiledClass = new CompiledClass(realByteCode, null, false,
+        "com/google/gwt/dev/javac/CompiledClassTest");
+    compiledClass.initUnit(new MockCompilationUnit("com.google.gwt.dev.javac.CompiledClassTest",
+        "source1"));
+
+    assertEquals("com.google.gwt.dev.javac.CompiledClassTest", compiledClass.getSourceName(null));
   }
   
   public void testCompiledClassSerialization() throws Exception {

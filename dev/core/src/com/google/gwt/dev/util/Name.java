@@ -86,37 +86,13 @@ public class Name {
         return internalName.replace('/', '.');
       }
       
-      public static String toSourceName(String internalName) {
-        assert isInternalName(internalName);
-        // don't change a trailing $ or slash to a .
-        return NON_TRAILING_DOLLAR_SLASH.matcher(internalName).replaceAll(".$1");
-      }
-  
       private InternalName() {
       }
     }
 
-  /**
-   * Represents a Java class name in either source or binary form, for example:
-   * {@code org.example.Foo.Bar or org.example.Foo$Bar}.
-   * 
-   * See {@link "http://java.sun.com/docs/books/jls/third_edition/html/binaryComp.html#59892"}
-   */
-  public static class SourceOrBinaryName {
-
-    public static String toSourceName(String dottedName) {
-      // don't change a trailing $ to a .
-      return NON_TRAILING_DOLLAR.matcher(dottedName).replaceAll(".$1");
-    }
-  }
-
   // Non-trailing $
   private static final Pattern NON_TRAILING_DOLLAR =
     Pattern.compile("[$](\\p{javaJavaIdentifierStart})");
-
-  // Non-trailing $ or /
-  private static final Pattern NON_TRAILING_DOLLAR_SLASH =
-    Pattern.compile("[$/](\\p{javaJavaIdentifierStart})");
 
   /**
    * Get the binary name for a Java class.
@@ -126,16 +102,6 @@ public class Name {
    */
   public static String getBinaryNameForClass(Class<?> clazz) {
     return clazz.getName();
-  }
-
-  /**
-   * Get the internal name for a Java class.
-   * 
-   * @param clazz class literal
-   * @return internal name for the class
-   */
-  public static String getInternalNameForClass(Class<?> clazz) {
-    return BinaryName.toInternalName(getBinaryNameForClass(clazz));
   }
 
   /**
