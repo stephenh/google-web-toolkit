@@ -274,7 +274,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   }
 
   /**
-   * A map of fully-qualify source names (ie, use "." rather than "$" for nested
+   * A map of fully-qualified source names (ie, use "." rather than "$" for nested
    * classes) to JRealClassTypes.
    */
   private final Map<String, JRealClassType> allTypes = new HashMap<String, JRealClassType>();

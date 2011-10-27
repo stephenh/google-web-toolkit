@@ -136,6 +136,9 @@ public class JsniRef {
     this.paramTypes = paramTypes;
   }
 
+  /**
+   * @return the source or binary class name, e.g. {@code foo.Bar$Zaz} or {@code foo.Bar.Zaz}
+   */
   public String className() {
     return className;
   }

@@ -205,14 +205,14 @@ public class CollectClassData extends EmptyVisitor {
   }
 
   /**
-   * @return the name
+   * @return the internal name
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @return the outerClass
+   * @return the outer class internal name (or null if not an inner class), e.g. {@code foo/Foo$Bar}
    */
   public String getOuterClass() {
     return outerClass;

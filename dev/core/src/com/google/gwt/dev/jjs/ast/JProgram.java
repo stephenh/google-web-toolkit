@@ -360,6 +360,7 @@ public class JProgram extends JNode {
 
   private JClassType typeJavaLangObject;
 
+  // Map of binary name to JDeclaredType
   private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
 
   private List<JReferenceType> typesByQueryId;

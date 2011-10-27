@@ -268,6 +268,9 @@ public abstract class CompilationUnitBuilder {
     return source;
   }
 
+  /**
+   * @return the binary type name
+   */
   public abstract String getTypeName();
 
   public CompilationUnitBuilder setClasses(List<CompiledClass> compiledClasses) {

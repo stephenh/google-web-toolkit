@@ -415,19 +415,23 @@ public class JdtCompiler {
     return options;
   }
 
-  public static ReferenceBinding resolveType(LookupEnvironment lookupEnvironment, String typeName) {
+  /**
+   * Resolves source or binary names (typically from JSNI) via the {@code LookupEnvironment}.
+   */
+  public static ReferenceBinding resolveType(LookupEnvironment lookupEnvironment,
+      String sourceOrBinaryName) {
     ReferenceBinding type = null;
 
-    int p = typeName.indexOf('$');
+    int p = sourceOrBinaryName.indexOf('$');
     if (p > 0) {
       // resolve an outer type before trying to get the cached inner
-      String cupName = typeName.substring(0, p);
+      String cupName = sourceOrBinaryName.substring(0, p);
       char[][] chars = CharOperation.splitOn('.', cupName.toCharArray());
       ReferenceBinding outerType = lookupEnvironment.getType(chars);
       if (outerType != null) {
         // outer class was found
         resolveRecursive(outerType);
-        chars = CharOperation.splitOn('.', typeName.toCharArray());
+        chars = CharOperation.splitOn('.', sourceOrBinaryName.toCharArray());
         type = lookupEnvironment.getCachedType(chars);
         if (type == null) {
           // no inner type; this is a pure failure
@@ -436,7 +440,7 @@ public class JdtCompiler {
       }
     } else {
       // just resolve the type straight out
-      char[][] chars = CharOperation.splitOn('.', typeName.toCharArray());
+      char[][] chars = CharOperation.splitOn('.', sourceOrBinaryName.toCharArray());
       type = lookupEnvironment.getType(chars);
     }
 
@@ -450,10 +454,10 @@ public class JdtCompiler {
 
     // Assume that the last '.' should be '$' and try again.
     //
-    p = typeName.lastIndexOf('.');
+    p = sourceOrBinaryName.lastIndexOf('.');
     if (p >= 0) {
-      typeName = typeName.substring(0, p) + "$" + typeName.substring(p + 1);
-      return resolveType(lookupEnvironment, typeName);
+      sourceOrBinaryName = sourceOrBinaryName.substring(0, p) + "$" + sourceOrBinaryName.substring(p + 1);
+      return resolveType(lookupEnvironment, sourceOrBinaryName);
     }
 
     return null;
@@ -715,8 +719,8 @@ public class JdtCompiler {
     return true;
   }
 
-  public ReferenceBinding resolveType(String typeName) {
-    return resolveType(compilerImpl.lookupEnvironment, typeName);
+  public ReferenceBinding resolveType(String sourceOrBinaryName) {
+    return resolveType(compilerImpl.lookupEnvironment, sourceOrBinaryName);
   }
 
   public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {

@@ -120,7 +120,7 @@ public abstract class TypeOracle {
   public abstract JPackage findPackage(String pkgName);
 
   /**
-   * Finds a class or interface given its fully-qualified name.
+   * Finds a class or interface given its fully-qualified source name.
    *
    * @param name fully-qualified class/interface name - for nested classes, use
    *          its source name rather than its binary name (that is, use a "."
