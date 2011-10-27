@@ -104,6 +104,10 @@ public class CompilationStateBuilder {
             unresolvedSimple.add(interner.intern(String.valueOf(simpleRef)));
           }
           for (char[][] qualifiedRef : cud.compilationResult().qualifiedReferences) {
+            // skip refs like com.google.gwt.event.shared.GwtEvent<H>.Type<H>
+            if (CharOperation.contains('<', qualifiedRef)) {
+              continue;
+            }
             unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
           }
           for (String jsniDep : jsniDeps) {
