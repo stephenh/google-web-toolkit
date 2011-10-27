@@ -18,14 +18,15 @@ package com.google.gwt.dev.javac.typemodel;
 import com.google.gwt.core.ext.typeinfo.BadTypeArgsException;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.ParseException;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.javac.JavaSourceParser;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 
@@ -288,6 +289,11 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
       AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
 
   /**
+   * A map of fully-qualified internal names, passed in by the TypeOracleMediator.
+   */
+  private Map<String, JRealClassType> internalMapper;
+
+  /**
    * Cached singleton type representing <code>java.lang.Object</code>.
    */
   private JClassType javaLangObject;
@@ -373,6 +379,25 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
       if (type != null) {
         return type;
       }
+    }
+    return null;
+  }
+
+  @Override
+  public JClassType findTypeByInternalName(String internalName) {
+    assert Name.isInternalName(internalName);
+    return internalMapper.get(internalName);
+  }
+
+  @Override
+  public JClassType findTypeBySourceOrBinaryName(String name) {
+    JClassType bySource = allTypes.get(name);
+    if (bySource != null) {
+      return bySource;
+    }
+    JClassType byBinary = internalMapper.get(BinaryName.toInternalName(name));
+    if (byBinary != null) {
+      return byBinary;
     }
     return null;
   }
@@ -648,6 +673,13 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     result = new JWildcardType(boundType, typeBound);
     wildcardTypes.put(key, result);
     return result;
+  }
+
+  /**
+   * Receives the existing by-internal-name mapping of JRealClassTypes from {@link TypeOracleMediator}.
+   */
+  public void initInternalMapper(Map<String, JRealClassType> internalMapper) {
+    this.internalMapper = internalMapper;
   }
 
   /**
@@ -973,4 +1005,5 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     JClassType[] typeArgs = typeArgList.toArray(new JClassType[typeArgList.size()]);
     return typeArgs;
   }
+
 }

@@ -140,6 +140,24 @@ public abstract class TypeOracle {
   public abstract JClassType findType(String pkgName, String typeName);
 
   /**
+   * Finds a class or interface given its fully-qualified internal name (e.g. for JSNI refs).
+   *
+   * @param name fully-qualified class/interface name
+   *
+   * @return <code>null</code> if the type is not found
+   */
+  public abstract JClassType findTypeByInternalName(String name);
+
+  /**
+   * Finds a class or interface given its fully-qualified source or binary name.
+   *
+   * @param name fully-qualified class/interface name
+   *
+   * @return <code>null</code> if the type is not found
+   */
+  public abstract JClassType findTypeBySourceOrBinaryName(String name);
+
+  /**
    * Gets the type object that represents an array of the specified type. The
    * returned type always has a stable identity so as to guarantee that all
    * calls to this method with the same argument return the same object.

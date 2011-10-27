@@ -21,6 +21,7 @@ import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.StringInterner;
 
 import java.util.ArrayList;
@@ -154,6 +155,7 @@ public class CollectClassData extends EmptyVisitor {
   private String outerClass;
   private String outerMethodName;
   private String outerMethodDesc;
+  private String innerClass;
   private CollectClassData.ClassType classType = ClassType.TopLevel;
 
   /**
@@ -188,6 +190,13 @@ public class CollectClassData extends EmptyVisitor {
    */
   public List<CollectFieldData> getFields() {
     return fields;
+  }
+
+  /**
+   * @return the simple inner class name (or null if not an inner class), e.g. {@code Bar} for {@code foo/Foo$Bar}
+   */
+  public String getInnerClass() {
+    return innerClass;
   }
 
   /**
@@ -237,6 +246,18 @@ public class CollectClassData extends EmptyVisitor {
    */
   public String getSignature() {
     return signature;
+  }
+
+  /**
+   * @return the non-nested simple name (e.g. {@code Zaz} for {@code foo.Bar.Zaz}
+   */
+  public String getSimpleName() {
+    if (innerClass != null) {
+      return innerClass;
+    } else {
+      // this is a top-level class, so the simple name is the class name
+      return InternalName.getClassName(name);
+    }
   }
 
   /**
@@ -345,6 +366,7 @@ public class CollectClassData extends EmptyVisitor {
     if (this.name.equals(name)) {
       if (outerName != null) {
         outerClass = outerName;
+        innerClass = innerName;
       }
       // TODO(jat): should we only pull in a subset of these flags? Use only
       // these flags, or what? For now, just grab ACC_STATIC and ACC_PRIVATE

@@ -16,10 +16,10 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
+import com.google.gwt.dev.javac.asm.CollectClassData;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.DiskCacheToken;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.StringInterner;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -64,7 +64,7 @@ public final class CompiledClass implements Serializable {
       }
       CompiledClass newRef = enclosingClassMap.get(copyCc.enclosingClass);
       if (null == newRef) {
-        throw new InternalCompilerException("Enclosing type not found for " + copyCc.sourceName);
+        throw new InternalCompilerException("Enclosing type not found for " + copyCc.internalName);
       }
       copyCc.enclosingClass = newRef;
     }
@@ -83,7 +83,6 @@ public final class CompiledClass implements Serializable {
   private transient NameEnvironmentAnswer nameEnvironmentAnswer;
   private String signatureHash;
 
-  private final String sourceName;
   private transient TypeData typeData;
 
   private CompilationUnit unit;
@@ -103,7 +102,6 @@ public final class CompiledClass implements Serializable {
       String internalName) {
     this.enclosingClass = enclosingClass;
     this.internalName = StringInterner.get().intern(internalName);
-    this.sourceName = StringInterner.get().intern(InternalName.toSourceName(internalName));
     this.classBytesToken = new DiskCacheToken(diskCache.writeByteArray(classBytes));
     this.isLocal = isLocal;
   }
@@ -114,7 +112,6 @@ public final class CompiledClass implements Serializable {
   private CompiledClass(CompiledClass orig, CompilationUnit newUnit) {
     this.enclosingClass = orig.enclosingClass;
     this.internalName = orig.internalName;
-    this.sourceName = orig.sourceName;
     this.classBytesToken = orig.classBytesToken;
     this.isLocal = orig.isLocal;
     this.typeData = orig.typeData;
@@ -161,14 +158,24 @@ public final class CompiledClass implements Serializable {
   /**
    * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
-  public String getSourceName() {
-    return sourceName;
+  public String getSourceName(Map<String, CompiledClass> classFileMap) {
+    CollectClassData cd = getTypeData().getCollectClassData();
+    if (cd.getInnerClass() == null) {
+      // This manual internal -> source replace is safe because any "$"
+      // characters have been split up by ASM building the CollectClassDatas
+      return cd.getName().replace('/', '.');
+    } else {
+      CompiledClass outer = classFileMap.get(cd.getOuterClass());
+      assert outer != null : "outer class not found for " + cd.getInnerClass();
+      // recurse for nested inner types, e.g. foo.Bar.Zaz.Zip
+      return outer.getSourceName(classFileMap) + "." + cd.getInnerClass();
+    }
   }
 
   public TypeData getTypeData() {
     if (typeData == null) {
       typeData =
-          new TypeData(getPackageName(), getSourceName(), getInternalName(), null, getBytes(),
+          new TypeData(getPackageName(), getInternalName(), null, getBytes(),
               getUnit().getLastModified());
     }
     return typeData;

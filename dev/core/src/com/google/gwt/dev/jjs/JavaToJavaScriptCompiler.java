@@ -520,7 +520,7 @@ public class JavaToJavaScriptCompiler {
 
     Memory.maybeDumpMemory("CompStateBuilt");
 
-    JProgram jprogram = new JProgram();
+    JProgram jprogram = new JProgram(typeOracle);
     JsProgram jsProgram = new JsProgram();
 
     try {

@@ -64,7 +64,7 @@ public class AstConstructor {
       }
     };
 
-    JProgram jprogram = new JProgram();
+    JProgram jprogram = new JProgram(state.getTypeOracle());
     JsProgram jsProgram = new JsProgram();
     UnifyAst unifyAst = new UnifyAst(jprogram, jsProgram, options, rpo);
     unifyAst.buildEverything(logger);

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.Lists;
@@ -72,9 +73,11 @@ class Dependencies implements Serializable {
    */
   Dependencies(String myPackage, List<String> unresolvedQualified, List<String> unresolvedSimple,
       List<String> apiRefs) {
+    assert Name.isInternalName(myPackage);
     this.myPackage =
-        StringInterner.get().intern((myPackage.length() == 0) ? "" : (myPackage + '.'));
+        StringInterner.get().intern((myPackage.length() == 0) ? "" : (myPackage + '/'));
     for (String qualifiedRef : unresolvedQualified) {
+      assert Name.isInternalName(qualifiedRef);
       qualified.put(qualifiedRef, null);
     }
     for (String simpleRef : unresolvedSimple) {
@@ -154,7 +157,7 @@ class Dependencies implements Serializable {
     if (cc != null) {
       return cc;
     }
-    return allValidClasses.get("java.lang." + ref);
+    return allValidClasses.get("java/lang/" + ref);
   }
 
   /**

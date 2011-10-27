@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -83,7 +84,8 @@ public class CompilationStateBuilder {
             public ReferenceBinding resolveType(String sourceOrBinaryName) {
               ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
               if (resolveType != null) {
-                jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
+                String binaryName = CharOperation.toString(resolveType.compoundName);
+                jsniDeps.add(BinaryName.toInternalName(binaryName));
               }
               return resolveType;
             }
@@ -97,7 +99,9 @@ public class CompilationStateBuilder {
           MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
 
           StringInterner interner = StringInterner.get();
-          String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
+          // Manual .->/ is okay because getTypeName is a top-level type
+          String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()
+              .replace('.', '/')));
           List<String> unresolvedQualified = new ArrayList<String>();
           List<String> unresolvedSimple = new ArrayList<String>();
           for (char[] simpleRef : cud.compilationResult().simpleNameReferences) {
@@ -108,7 +112,17 @@ public class CompilationStateBuilder {
             if (CharOperation.contains('<', qualifiedRef)) {
               continue;
             }
-            unresolvedQualified.add(interner.intern(CharOperation.toString(qualifiedRef)));
+            // qualifiedRef is the source name, but we want internal names
+            ReferenceBinding binding = compiler.resolveType(CharOperation.toString(qualifiedRef));
+            final String internalName;
+            if (binding != null) {
+              // the compiler successfully found the type by source name
+              internalName = new String(CharOperation.concatWith(binding.compoundName, '/'));
+            } else {
+              // it failed (which happens on all packages). fall back to name mangling.
+              internalName = new String(CharOperation.concatWith(qualifiedRef, '/'));
+            }
+            unresolvedQualified.add(interner.intern(internalName));
           }
           for (String jsniDep : jsniDeps) {
             unresolvedQualified.add(interner.intern(jsniDep));
@@ -127,7 +141,7 @@ public class CompilationStateBuilder {
           }
 
           for (CompiledClass cc : compiledClasses) {
-            allValidClasses.put(cc.getSourceName(), cc);
+            allValidClasses.put(cc.getInternalName(), cc);
           }
 
           builder.setClasses(compiledClasses).setTypes(types).setDependencies(dependencies)
@@ -141,7 +155,7 @@ public class CompilationStateBuilder {
     }
 
     /**
-     * A global cache of all currently-valid class files keyed by source name.
+     * A global cache of all currently-valid class files keyed by internal name.
      * This is used to validate dependencies when reusing previously cached
      * units, to make sure they can be recompiled if necessary.
      */
@@ -186,7 +200,7 @@ public class CompilationStateBuilder {
     void addValidUnit(CompilationUnit unit) {
       compiler.addCompiledUnit(unit);
       for (CompiledClass cc : unit.getCompiledClasses()) {
-        allValidClasses.put(cc.getSourceName(), cc);
+        allValidClasses.put(cc.getInternalName(), cc);
       }
     }
 
@@ -197,9 +211,7 @@ public class CompilationStateBuilder {
       // Initialize the set of valid classes to the initially cached units.
       for (CompilationUnit unit : cachedUnits.values()) {
         for (CompiledClass cc : unit.getCompiledClasses()) {
-          // Map by source name.
-          String sourceName = cc.getSourceName();
-          allValidClasses.put(sourceName, cc);
+          allValidClasses.put(cc.getInternalName(), cc);
         }
       }
 
@@ -297,7 +309,7 @@ public class CompilationStateBuilder {
         // Any units we invalidated must now be removed from the valid classes.
         for (CompilationUnit unit : invalidatedUnits) {
           for (CompiledClass cc : unit.getCompiledClasses()) {
-            allValidClasses.remove(cc.getSourceName());
+            allValidClasses.remove(cc.getInternalName());
           }
         }
       } while (builders.size() > 0);

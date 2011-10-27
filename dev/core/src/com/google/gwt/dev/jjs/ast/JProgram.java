@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -318,6 +319,8 @@ public class JProgram extends JNode {
 
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
+  private final transient TypeOracle otherTypeOracle;
+
   /**
    * Special serialization treatment.
    */
@@ -363,6 +366,9 @@ public class JProgram extends JNode {
   // Map of binary name to JDeclaredType
   private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
 
+  // Map of source name to JDeclaredType
+  private final Map<String, JDeclaredType> typeNameMapBySource = new HashMap<String, JDeclaredType>();
+
   private List<JReferenceType> typesByQueryId;
 
   private JClassType typeSpecialClassLiteralHolder;
@@ -374,13 +380,11 @@ public class JProgram extends JNode {
   /**
    * Constructor.
    * 
-   * @param correlator Controls whether or not SourceInfo nodes created via the
-   *          JProgram will record descendant information. Enabling this feature
-   *          will collect extra data during the compilation cycle, but at a
-   *          cost of memory and object allocations.
+   * @param otherTypeOracle TypeOracle used for binary/source name looking
    */
-  public JProgram() {
+  public JProgram(TypeOracle otherTypeOracle) {
     super(SourceOrigin.UNKNOWN);
+    this.otherTypeOracle = otherTypeOracle;
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -390,9 +394,9 @@ public class JProgram extends JNode {
 
   public void addType(JDeclaredType type) {
     allTypes.add(type);
-    String name = type.getName();
-    putIntoTypeMap(name, type);
+    putIntoTypeMap(type);
 
+    String name = type.getName();
     if (CODEGEN_TYPES_SET.contains(name)) {
       codeGenTypes.add((JClassType) type);
     }
@@ -653,9 +657,12 @@ public class JProgram extends JNode {
   }
 
   public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
-    String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
-
-    return typeNameMap.get(srcTypeName);
+    JDeclaredType byBinary = typeNameMap.get(qualifiedBinaryOrSourceName);
+    if (byBinary != null) {
+      return byBinary;
+    }
+    JDeclaredType bySource = typeNameMapBySource.get(qualifiedBinaryOrSourceName);
+    return bySource;
   }
 
   public JField getIndexedField(String string) {
@@ -902,10 +909,14 @@ public class JProgram extends JNode {
         restFragments);
   }
 
-  public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
-    // Make it into a source type name.
-    String srcTypeName = qualifiedBinaryName.replace('$', '.');
-    typeNameMap.put(srcTypeName, type);
+  public void putIntoTypeMap(JDeclaredType type) {
+    // Store by binary name
+    typeNameMap.put(type.getName(), type);
+    com.google.gwt.core.ext.typeinfo.JClassType classType = otherTypeOracle.findTypeBySourceOrBinaryName(type.getName());
+    if (classType != null) {
+      // And source name
+      typeNameMapBySource.put(classType.getQualifiedSourceName(), type);
+    }
   }
 
   public void putStaticImpl(JMethod method, JMethod staticImpl) {
