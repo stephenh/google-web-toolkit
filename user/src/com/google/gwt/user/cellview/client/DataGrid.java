@@ -713,6 +713,10 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
     tableData.removeColumnStyleName(index, styleName);
   }
 
+  public void setAlwaysShowScrollBars(boolean alwaysShowScrollBar) {
+    tableDataScroller.setAlwaysShowScrollBars(true);
+  }
+
   @Override
   public void setEmptyTableWidget(Widget widget) {
     emptyTableWidgetContainer.setWidget(0, 0, widget);
